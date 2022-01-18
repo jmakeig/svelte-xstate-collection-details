@@ -9,6 +9,12 @@ const config = {
 		// hydrate the <div id="svelte"> element in src/app.html
 		target: '#svelte',
 		vite: {
+			server: {
+				hmr: {
+					// https://github.com/sveltejs/kit/issues/1134
+					port: 443
+				}
+			},
 			resolve: {
 				alias: {
 					// these are the aliases and paths to them
