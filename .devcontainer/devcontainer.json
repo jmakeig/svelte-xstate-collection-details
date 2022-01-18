@@ -4,6 +4,8 @@
 		"workbench.colorTheme": "Dracula",
 		"editor.tabSize": 2,
 		"editor.insertSpaces": false,
+		"editor.minimap.enabled": false,
+		"terminal.integrated.cursorStyle": "line",
 		"svelte.enable-ts-plugin": true,
 		"[svelte]": {
 			"editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -15,9 +17,5 @@
 			"editor.defaultFormatter": "esbenp.prettier-vscode"
 		}
 	},
-	"extensions": [
-		"dracula-theme.theme-dracula",
-		"esbenp.prettier-vscode",
-		"svelte.svelte-vscode"
-	]
+	"extensions": ["dracula-theme.theme-dracula", "esbenp.prettier-vscode", "svelte.svelte-vscode"]
 }
