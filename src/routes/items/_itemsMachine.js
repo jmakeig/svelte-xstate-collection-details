@@ -25,11 +25,7 @@ const itemDef = {
         */
 				initialize: {
 					target: 'initialized',
-					actions: [
-						//(c, e) => console.log(c, e),
-						'store',
-						'cache'
-					]
+					actions: ['store', 'cache']
 				}
 			}
 		},
@@ -43,7 +39,7 @@ const itemDef = {
           "item": { "name": "C" }
         }
         */
-				// Isn’t this just the same as initialize?
+				// TODO: Isn’t this just the same as initialize?
 				rehydrate: {
 					target: ['.validated.indeterminate', '.mutated.clean'],
 					actions: ['store', 'cache']
