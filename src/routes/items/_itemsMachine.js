@@ -9,10 +9,12 @@ const itemDef = {
 		cache: null
 	},
 	initial: 'uninitialized',
-	states: {
+	on: {
 		DEBUG: {
 			actions: [(c, e) => console.log(c)]
-		},
+		}
+	},
+	states: {
 		uninitialized: {
 			on: {
 				/*
@@ -140,8 +142,13 @@ const itemsDef = {
 							target: '#itemsMachine.initialized',
 							actions: [assign({ items: (context, event) => event.data })]
 						},
-						onError: {}
+						onError: {
+							target: 'error'
+						}
 					}
+				},
+				error: {
+					entry: [(context, event) => console.log('error in loadItems', context, event)]
 				}
 			}
 		},
@@ -161,7 +168,11 @@ const itemsDef = {
             */
 						select: {
 							target: '.selected',
-							actions: ['selectItem', 'initializeSelectedItem']
+							actions: [
+								'selectItem',
+								// (c, e) => console.log('After spawn', c, e),
+								'initializeSelectedItem'
+							]
 						}
 					},
 					states: {
@@ -197,7 +208,10 @@ const itemsDef = {
 const itemsConfig = {
 	actions: {
 		selectItem: assign({
-			selected: (context, event) => spawn(itemMachine, `item-${event.item.name}`)
+			selected: (context, event) => {
+				// console.log('spawn', context, event);
+				return spawn(itemMachine, `item-${event.item.name}`);
+			}
 		}),
 		initializeSelectedItem: send(
 			{ type: 'initialize', item: { name: 'A' } },
