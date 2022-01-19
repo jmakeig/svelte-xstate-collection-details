@@ -1,6 +1,10 @@
-This repo is an exercise to understand how to plumb [Svelte](https://svelte.dev) components with interrelated [XState](https://xstate.js.org) state machines managing state. The goal is to declare as much of the _busisness logic_ as possible in the state machine(s) and relegate the UI to pure _presentation logic_.  The use case here is a classic collection-detail. Initially you get a list of available items. Selecting one shows its detail and allows the user to edit.
+This repo is an experiment to understand how to plumb [Svelte](https://svelte.dev) components with interrelated [XState](https://xstate.js.org) state machines to manage state. The goal is to declare as much of the _busisness logic_ in the state machine(s) and relegate the UI to pure _presentation logic_—bascially a giant switch statement over finite state. 
 
-The key insight was that XState actors (e.g. interpreted machines) are also Svelte stores. Passing stores between components allows you to let XState handle the relationships between the backing state, for example, `spawn`ing child machines. As @Rich-Harris’s comment above indicates, it’s possible to hydrate server-generated content with “real” objects, not just JSON-serializable data. 🤯
+The use case for this example is a classic collection-detail. Initially you get a list of available items. Selecting one shows its detail and allows the user to edit.
+
+The key insight leading me here was that XState actors (e.g. interpreted machines) are also Svelte stores. Unlike components accessing global stores, injecting stores into components lets XState handle the relationships between the backing state, for example, `spawn`ing child machines. With SvelteKit, you can even pre-render this on the server. 🤯
+
+The app is made up of a page component that instantiates the backing state machine and delegates to UI components. Each component pushes its child components’ reactive state down, making them relatively straightforward to test and reason over. 
 
 ### Page component
 
