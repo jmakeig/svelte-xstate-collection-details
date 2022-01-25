@@ -1,5 +1,6 @@
-import { createMachine, assign, spawn, send, actions, interpret } from 'xstate';
-const { stop } = actions;
+import { createMachine, assign, spawn, send, interpret } from 'xstate';
+// import { actions } from 'xstate';
+// const { stop } = actions;
 
 const itemDef = {
 	id: 'itemMachine',
@@ -205,8 +206,10 @@ const itemsConfig = {
 	actions: {
 		selectItem: assign({
 			selected: (context, event) => {
-				// console.log('spawn', context, event);
-				return spawn(itemMachine, `item-${event.item.name}`);
+				console.log('spawn', context, event);
+				const ref = spawn(itemMachine, `item-${event.item.name}`);
+				ref.machine = itemMachine;
+				return ref;
 			}
 		}),
 		initializeSelectedItem: send(
@@ -230,6 +233,8 @@ function fetchItemsDummy(filter) {
 	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
 }
 
+import { serviceStore } from '$lib/service-store';
+
 export function createItemsStore(fetchItems) {
 	const machine = createMachine(itemsDef, {
 		...itemsConfig,
@@ -237,5 +242,32 @@ export function createItemsStore(fetchItems) {
 			loadItems: (context, event) => fetchItems(context.filter)
 		}
 	});
-	return interpret(machine).start();
+	return serviceStore(interpret(machine).start(), 'items', itemsPropertiesSelector);
+}
+
+function itemsPropertiesSelector(context, key) {
+	console.log('itemsPropertiesSelector', context, key);
+	return {
+		//[Symbol.iterator]: obj[Symbol.iterator] // Why doesn’t this work?
+		*[Symbol.iterator]() {
+			for (const item of context[key]) yield item;
+		},
+		get selected() {
+			console.log('get selected()')
+			// console.log('context.selected', context.selected);
+			if (!!context.selected) {
+				const store = serviceStore(context.selected, 'item', itemPropertiesSelector);
+				console.log('store', store);
+				return store;
+			}
+			return context.selected;
+		}
+	};
+}
+
+function itemPropertiesSelector(context, key) {
+	console.log('itemPropertiesSelector', context, key);
+	return {
+		...context['item']
+	};
 }

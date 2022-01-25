@@ -9,29 +9,30 @@
 		}
 	});
 	*/
-	import { derived } from 'svelte/store';
-	const selected = derived(items, ($items) => $items.context.selected);
+	// import { derived } from 'svelte/store';
+	// const selected = derived(items, ($items) => $items.state.context.selected);
 	import Item from '$components/Item.svelte';
 </script>
 
 <h1>Items</h1>
-{#if $items.matches('initialized')}
+{#if $items.state.matches('initialized')}
 	<pre>/items</pre>
 	<!-- <pre>{JSON.stringify($items.context.items, null, 2)}</pre> -->
 	<ul>
-		{#each $items.context.items as item, i}
+		{#each Array.from($items) as item, i}
 			<li>
 				<a
 					href="/items/{item.name}"
 					on:click|preventDefault={(event) => {
 						items.send('select', { item });
-						$selected.send('initialize', item);
+						$items.selected.send('initialize', item);
 					}}>{item.name}</a
 				>
 			</li>
 		{/each}
 	</ul>
 {/if}
-{#if $items.matches('initialized.selection.selected')}
-	<Item item={$selected} />
+{#if $items.state.matches('initialized.selection.selected')}
+	<pre>{JSON.stringify($items.selected, null, 2)}</pre>
+	<Item item={$items.selected} />
 {/if}

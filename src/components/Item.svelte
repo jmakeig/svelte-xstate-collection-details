@@ -1,11 +1,10 @@
 <script>
-	import { log } from 'xstate/lib/actions';
-
 	export let item; // Actor
 </script>
 
 <h2>Item</h2>
-<pre>{JSON.stringify($item.context, null, 2)}</pre>
+<pre>{JSON.stringify($item, null, 2)}</pre>
+<pre>{JSON.stringify(typeof item.subscribe, null, 2)}</pre>
 <form
 	on:submit|preventDefault={(event) => console.log('submit')}
 	on:input={(event) => {
@@ -15,10 +14,10 @@
 	}}
 >
 	<div>
-		<label for="name">Name</label> <input id="name" name="name" value={$item.context.item.name} />
+		<label for="name">Name</label> <input id="name" name="name" value={$item.name} />
 	</div>
 	<div>
 		<label for="description">Description</label>
-		<textarea id="description" name="description">{$item.context.item.name}</textarea>
+		<textarea id="description" name="description">{$item.name}</textarea>
 	</div>
 </form>
