@@ -51,18 +51,20 @@ export function serviceStore(
 	key = 'data',
 	selector = (context, key) => getProperties(context[key])
 ) {
+	console.log('serviceStore', service, key, selector);
 	const store = readable(service.machine.initialState, (set) => {
 		service.subscribe((state) => {
-			if (false !== state.changed) {
-				set({
-					// Spread the context such that you can do $toggle.lastUpdate rather than
-					// $toggle.context.lastUpdate. This is more about aesthetics and keystrokes
-					// than functionality or performance.
-					...selector(state.context, key),
-					// Access the state via a property and push context to the top level
-					state
-				});
-			}
+			console.log(`${service.machine.id}#subscribe`);
+			//if (false !== state.changed) {
+			set({
+				// Spread the context such that you can do $toggle.lastUpdate rather than
+				// $toggle.context.lastUpdate. This is more about aesthetics and keystrokes
+				// than functionality or performance.
+				...selector(state.context, key),
+				// Access the state via a property and push context to the top level
+				state
+			});
+			//}
 		});
 		service.start();
 		return () => service.stop();
