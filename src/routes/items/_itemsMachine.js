@@ -206,7 +206,7 @@ const itemsConfig = {
 	actions: {
 		selectItem: assign({
 			selected: (context, event) => {
-				console.log('spawn', context, event);
+				// console.log('spawn', context, event);
 				const ref = spawn(itemMachine, `item-${event.item.name}`);
 				ref.machine = itemMachine;
 				return ref;
@@ -246,7 +246,20 @@ export function createItemsStore(fetchItems) {
 }
 
 function itemsPropertiesSelector(context, key) {
-	console.log('itemsPropertiesSelector', context, key);
+	// console.log('itemsPropertiesSelector', context, key);
+	return Object.assign(context[key], {
+		get selected() {
+			// console.log('get selected()');
+			// console.log('context.selected', context.selected);
+			if (!!context.selected) {
+				const store = serviceStore(context.selected, 'item', itemPropertiesSelector);
+				// console.log('store', store);
+				return store;
+			}
+			return context.selected;
+		}
+	});
+	/*
 	return {
 		//[Symbol.iterator]: obj[Symbol.iterator] // Why doesn’t this work?
 		*[Symbol.iterator]() {
@@ -263,11 +276,15 @@ function itemsPropertiesSelector(context, key) {
 			return context.selected;
 		}
 	};
+	*/
 }
 
 function itemPropertiesSelector(context, key) {
-	console.log('itemPropertiesSelector', context, key);
+	// console.log('itemPropertiesSelector', context, key);
+	/*
 	return {
 		...context['item']
 	};
+  */
+	return context.item;
 }

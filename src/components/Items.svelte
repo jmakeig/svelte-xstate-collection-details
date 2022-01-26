@@ -14,25 +14,26 @@
 	import Item from '$components/Item.svelte';
 </script>
 
-<h1>Items</h1>
-{#if $items.state.matches('initialized')}
-	<pre>/items</pre>
-	<!-- <pre>{JSON.stringify($items.context.items, null, 2)}</pre> -->
-	<ul>
-		{#each Array.from($items) as item, i}
-			<li>
-				<a
-					href="/items/{item.name}"
-					on:click|preventDefault={(event) => {
-						items.send('select', { item });
-						$items.selected.send('initialize', item);
-					}}>{item.name}</a
-				>
-			</li>
-		{/each}
-	</ul>
-{/if}
-{#if $items.state.matches('initialized.selection.selected')}
-	<pre>{JSON.stringify($items.selected, null, 2)}</pre>
-	<Item item={$items.selected} />
-{/if}
+<section style="outline: solid 1px red; padding: 0.5em;">
+	<h1>Items</h1>
+	{#if $items.state.matches('initialized')}
+		<pre>/items</pre>
+		<!-- <pre>{JSON.stringify($items.context.items, null, 2)}</pre> -->
+		<ul>
+			{#each Array.from($items) as item, i}
+				<li>
+					<a
+						href="/items/{item.name}"
+						on:click|preventDefault={(event) => {
+							items.send('select', { item });
+							$items.selected.send('initialize', item);
+						}}>{item.name}</a
+					>
+				</li>
+			{/each}
+		</ul>
+	{/if}
+	{#if $items.state.matches('initialized.selection.selected')}
+		<Item item={$items.selected} />
+	{/if}
+</section>

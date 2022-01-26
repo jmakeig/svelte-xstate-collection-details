@@ -34,12 +34,13 @@ function getProperties(obj) {
 		};
 	}
 	if (isPrimitive(obj)) {
-		return { value: obj }; // Hack!
+		throw new TypeError(`${typeof obj} is not an object`);
 	}
 	// Is this really the intention?
 	// What about, Date, Map, Set, etc.
 	return obj;
 }
+
 /**
  *
  * @param {Actor} service
@@ -51,11 +52,12 @@ export function serviceStore(
 	key = 'data',
 	selector = (context, key) => getProperties(context[key])
 ) {
-	console.log('serviceStore', service, key, selector);
+	// console.log('serviceStore', service, key, selector);
 	const store = readable(service.machine.initialState, (set) => {
 		service.subscribe((state) => {
-			console.log(`${service.machine.id}#subscribe`);
+			// console.log(`${service.machine.id}#subscribe`);
 			//if (false !== state.changed) {
+			/*
 			set({
 				// Spread the context such that you can do $toggle.lastUpdate rather than
 				// $toggle.context.lastUpdate. This is more about aesthetics and keystrokes
@@ -64,6 +66,13 @@ export function serviceStore(
 				// Access the state via a property and push context to the top level
 				state
 			});
+			*/
+			if (state.context[key]) {
+				//console.log('Object.assign()', Object.assign(state.context[key], { state }).state);
+				set(Object.assign(selector(state.context, key), { state }));
+			} else {
+				set({ state });
+			}
 			//}
 		});
 		service.start();
@@ -72,7 +81,14 @@ export function serviceStore(
 
 	return {
 		subscribe: store.subscribe,
-		send: service.send,
+		send: log(service.send),
 		service
+	};
+}
+
+function log(f) {
+	return function _f(...args) {
+		console.log('send', ...args);
+		return f(...args);
 	};
 }
