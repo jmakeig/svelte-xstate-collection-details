@@ -58,7 +58,7 @@ const itemDef = {
             */
 						update: {
 							target: '.dirty',
-							actions: ['store']
+							actions: ['store', (c, e) => console.log('update', c)]
 						}
 					},
 					states: {
@@ -248,43 +248,18 @@ export function createItemsStore(fetchItems) {
 function itemsPropertiesSelector(context, key) {
 	// console.log('itemsPropertiesSelector', context, key);
 	return Object.assign(context[key], {
+		// Getter to wrap the spawned child machine in a serviceStore()
 		get selected() {
-			// console.log('get selected()');
 			// console.log('context.selected', context.selected);
-			if (!!context.selected) {
-				const store = serviceStore(context.selected, 'item', itemPropertiesSelector);
-				// console.log('store', store);
-				return store;
+			if (exists(context.selected)) {
+				// console.log(context.selected.constructor.name);
+				return serviceStore(context.selected, 'item');
 			}
 			return context.selected;
 		}
 	});
-	/*
-	return {
-		//[Symbol.iterator]: obj[Symbol.iterator] // Why doesn’t this work?
-		*[Symbol.iterator]() {
-			for (const item of context[key]) yield item;
-		},
-		get selected() {
-			console.log('get selected()')
-			// console.log('context.selected', context.selected);
-			if (!!context.selected) {
-				const store = serviceStore(context.selected, 'item', itemPropertiesSelector);
-				console.log('store', store);
-				return store;
-			}
-			return context.selected;
-		}
-	};
-	*/
 }
 
-function itemPropertiesSelector(context, key) {
-	// console.log('itemPropertiesSelector', context, key);
-	/*
-	return {
-		...context['item']
-	};
-  */
-	return context.item;
+function exists(obj) {
+	return obj !== null && obj !== void 0;
 }
