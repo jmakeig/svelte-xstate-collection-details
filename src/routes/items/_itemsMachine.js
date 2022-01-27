@@ -140,7 +140,8 @@ const itemsDef = {
 							actions: [assign({ items: (context, event) => event.data })]
 						},
 						onError: {
-							target: 'error'
+							target: 'error',
+							actions: [assign({ error: (context, event) => event.data })]
 						}
 					}
 				},
@@ -227,13 +228,13 @@ const itemsConfig = {
 		loadItems: (context, event) => fetchItemsDummy(context.filter)
 	}
 };
-const itemsMachine = createMachine(itemsDef, itemsConfig);
 
 function fetchItemsDummy(filter) {
 	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
 }
 
-import { serviceStore } from '$lib/service-store';
+// import { serviceStore } from '$lib/service-store';
+import { serviceStore } from '../../lib/service-store.js';
 
 export function createItemsStore(fetchItems) {
 	const machine = createMachine(itemsDef, {

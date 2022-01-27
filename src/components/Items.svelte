@@ -20,7 +20,7 @@
 		<pre>/items</pre>
 		<!-- <pre>{JSON.stringify($items.context.items, null, 2)}</pre> -->
 		<ul>
-			{#each Array.from($items) as item, i}
+			{#each $items as item, i}
 				<li>
 					<a
 						href="/items/{item.name}"
