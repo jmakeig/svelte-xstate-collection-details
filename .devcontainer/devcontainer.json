@@ -21,6 +21,6 @@
 		"dracula-theme.theme-dracula",
 		"esbenp.prettier-vscode",
 		"svelte.svelte-vscode",
-		"mattpocock.xstate-vscode"
+		"statelyai.stately-vscode"
 	]
 }
