@@ -2,6 +2,22 @@ import { createMachine, assign, spawn, send, interpret } from 'xstate';
 // import { actions } from 'xstate';
 // const { stop } = actions;
 
+function fetchItemsDummy(filter) {
+	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
+}
+
+function fetchItemDummy(id) {
+	const item = {
+		name: id,
+		description: `Item ${id}`
+	};
+	return Promise.resolve(item);
+}
+
+function persistItemDummy(item) {
+	return Promise.resolve(Object.assign({ updated: new Date().toISOString() }, item));
+}
+
 const itemDef = {
 	id: 'itemMachine',
 	context: {
@@ -10,42 +26,57 @@ const itemDef = {
 		cache: null
 	},
 	initial: 'uninitialized',
-	on: {
-		DEBUG: {
-			actions: [(c, e) => console.log(c)]
-		}
-	},
+	/*
+  on: {
+    DEBUG: {
+      actions: [(c, e) => console.log(c)],
+    },
+  },
+  */
 	states: {
 		uninitialized: {
+			id: 'uninitialized',
 			on: {
 				/*
         {
           "type": "initialize",
-          "item": { "name": "A"}
+          "id": "X"
         }
         */
 				initialize: {
-					target: 'initialized',
-					actions: ['store', 'cache']
+					target: '.loading',
+					internal: false
+				}
+			},
+			initial: 'idle',
+			states: {
+				idle: {},
+				loading: {
+					invoke: {
+						id: 'loadItem',
+						src: 'loadItem',
+						onDone: {
+							target: '#initialized',
+							actions: ['log', 'load']
+						},
+						onError: {
+							target: 'error'
+						}
+					}
+				},
+				error: {
+					id: 'error',
+					actions: [
+						assign({
+							errors: (context, event) => [event.error]
+						})
+					]
 				}
 			}
 		},
 		initialized: {
 			id: 'initialized',
 			type: 'parallel',
-			on: {
-				/*
-        {
-          "type": "rehydrate",
-          "item": { "name": "C" }
-        }
-        */
-				// TODO: Isn’t this just the same as initialize?
-				rehydrate: {
-					target: ['.validated.indeterminate', '.mutated.clean'],
-					actions: ['store', 'cache']
-				}
-			},
 			states: {
 				mutated: {
 					initial: 'clean',
@@ -53,31 +84,58 @@ const itemDef = {
 						/*
             {
               "type": "update",
-              "item": { "name": "B" }
+              "item": { "name": "B", "description": "Some B" }
             }
             */
 						update: {
 							target: '.dirty',
-							actions: ['store', (c, e) => console.log('update', c)]
+							actions: ['log', 'store']
 						}
 					},
 					states: {
 						clean: {},
 						dirty: {
+							id: 'dirty',
 							on: {
 								/*
                 {
-                  "type": "cancel",
-                  "confirmation": true
+                  "type": "close",
                 }
                 */
-								cancel: [
-									{
-										target: ['#initialized.validated.indeterminate', '#initialized.mutated.clean'],
-										cond: 'confirm',
-										actions: ['restoreCache']
+								close: {
+									target: '.confirming'
+								},
+								save: {
+									target: '.saving',
+									cond: 'isValid' // Is this right?
+								}
+							},
+							states: {
+								saving: {
+									invoke: {
+										src: 'persistItem',
+										onDone: {
+											target: '#initialized',
+											actions: ['log', 'load']
+										},
+										onError: {
+											target: '#error'
+										}
 									}
-								]
+								},
+								confirming: {
+									invoke: {
+										src: 'confirm'
+									},
+									on: {
+										no: {
+											target: '#dirty'
+										},
+										yes: {
+											target: '#unloaded'
+										}
+									}
+								}
 							}
 						}
 					}
@@ -94,20 +152,39 @@ const itemDef = {
 					}
 				}
 			}
+		},
+		unloaded: {
+			id: 'unloaded',
+			entry: ['log', 'unload'],
+			type: 'final'
 		}
 	}
 };
 
 const itemConfig = {
 	actions: {
-		store: assign({ item: (context, event) => event.item }),
-		cache: assign({ cache: (context, event) => event.item }),
+		log: (c, e) => console.log(e.type, c, e),
+		load: assign((context, { data }) => ({
+			item: data, // "store"
+			cache: data, // "cache"
+			errors: null
+		})),
+		store: assign({ item: (context, { item }) => item }),
+		cache: assign({ cache: (context, { item }) => item }),
 		restoreCache: assign({ item: (context, event) => context.cache }),
-		clearCache: assign({ cache: null })
+		clearCache: assign({ cache: null }),
+		unload: assign({ item: null, cache: null, errors: null })
 	},
 	guards: {
-		isValid: (context, event) => 0 === Math.trunc((Math.random() * 10) % 2),
-		confirm: (context, event) => !!event.confirmation
+		isValid: (context, event) => 0 === Math.trunc((Math.random() * 10) % 2)
+	},
+	services: {
+		loadItem: (context, { id }) => fetchItemDummy(id),
+		persistItem: ({ item }, event) => persistItemDummy(item),
+		confirm: (context, event) => (callback, onReceive) => {
+			callback('yes');
+			return () => {};
+		}
 	}
 };
 
@@ -229,9 +306,7 @@ const itemsConfig = {
 };
 const itemsMachine = createMachine(itemsDef, itemsConfig);
 
-function fetchItemsDummy(filter) {
-	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
-}
+/****************************************************************/
 
 import { serviceStore } from '$lib/service-store';
 
