@@ -1,6 +1,4 @@
 import { createMachine, assign, spawn, send, interpret } from 'xstate';
-// import { actions } from 'xstate';
-// const { stop } = actions;
 
 function fetchItemsDummy(filter) {
 	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
@@ -26,13 +24,6 @@ const itemDef = {
 		cache: null
 	},
 	initial: 'uninitialized',
-	/*
-  on: {
-    DEBUG: {
-      actions: [(c, e) => console.log(c)],
-    },
-  },
-  */
 	states: {
 		uninitialized: {
 			id: 'uninitialized',
@@ -96,6 +87,7 @@ const itemDef = {
 						clean: {},
 						dirty: {
 							id: 'dirty',
+							initial: 'editing',
 							on: {
 								/*
                 {
@@ -111,6 +103,7 @@ const itemDef = {
 								}
 							},
 							states: {
+								editing: {},
 								saving: {
 									invoke: {
 										src: 'persistItem',
@@ -170,16 +163,13 @@ const itemConfig = {
 			errors: null
 		})),
 		store: assign({ item: (context, { item }) => item }),
-		cache: assign({ cache: (context, { item }) => item }),
-		restoreCache: assign({ item: (context, event) => context.cache }),
-		clearCache: assign({ cache: null }),
 		unload: assign({ item: null, cache: null, errors: null })
 	},
 	guards: {
 		isValid: (context, event) => 0 === Math.trunc((Math.random() * 10) % 2)
 	},
 	services: {
-		loadItem: (context, { id }) => fetchItemDummy(id),
+		loadItem: (context, { item }) => fetchItemDummy(item.name),
 		persistItem: ({ item }, event) => persistItemDummy(item),
 		confirm: (context, event) => (callback, onReceive) => {
 			callback('yes');
@@ -214,7 +204,7 @@ const itemsDef = {
 						src: 'loadItems',
 						onDone: {
 							target: '#itemsMachine.initialized',
-							actions: [assign({ items: (context, event) => event.data })]
+							actions: [assign({ items: (context, { data }) => data })]
 						},
 						onError: {
 							target: 'error'
@@ -282,17 +272,15 @@ const itemsDef = {
 const itemsConfig = {
 	actions: {
 		selectItem: assign({
-			selected: (context, event) => {
-				// console.log('spawn', context, event);
-				const ref = spawn(itemMachine, `item-${event.item.name}`);
+			selected: (context, { item }) => {
+				const ref = spawn(itemMachine, `item-${item.name}`);
 				ref.machine = itemMachine;
 				return ref;
 			}
 		}),
-		initializeSelectedItem: send(
-			{ type: 'initialize', item: { name: 'A' } },
-			{ to: (context) => context.selected }
-		),
+		initializeSelectedItem: send((context, event) => ({ type: 'initialize', item: event.item }), {
+			to: ({ selected }) => selected
+		}),
 		clearSelection: assign({
 			selected: (context, event) => {
 				context.selected.stop(); // Is this right?

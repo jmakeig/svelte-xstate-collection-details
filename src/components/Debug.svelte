@@ -1,12 +1,15 @@
 <script>
 	export let store;
 
-	function less(obj) {
-		if (null === obj || undefined === obj) return obj;
-		if (Array.isArray(obj)) return obj;
-		const copy = Object.assign({}, obj);
-		delete copy.state;
-		return copy;
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		store.service.subscribe((state)=>{})
+	});
+
+	function skip(k, v) {
+		if ('state' === k) return undefined;
+		return v;
 	}
 </script>
 
@@ -15,7 +18,7 @@
 	State
 	<pre>{JSON.stringify($store.state.value, null, 2)}</pre>
 	Context
-	<pre>{JSON.stringify(less($store), null, 2)}</pre>
+	<pre>{JSON.stringify($store, skip, 2)}</pre>
 </details>
 
 <style>

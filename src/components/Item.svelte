@@ -1,11 +1,12 @@
 <script>
-	import { matchesState, State } from 'xstate';
-
 	export let item; // Actor
+
+	import Debug from './Debug.svelte';
 </script>
 
-<section style="outline: solid 1px red; padding: 0.5em;">
-	<h2>Item: {JSON.stringify($item.state.value, null, 2)}</h2>
+<section style="outline: solid 1px red; padding: 0.5em; position: relative;">
+	<Debug store={item} />
+	<h2>Item</h2>
 	<form
 		on:submit|preventDefault={(event) => console.log('submit')}
 		on:input={(event) => {
@@ -15,7 +16,7 @@
 		}}
 	>
 		{#if $item.state.matches('initialized.validated.invalid')}
-			<output>Yo! There are some errors: {$item.state.context.error.length}</output>
+			<output>Yo! There are some errors: {$item.state.context.errors}</output>
 		{/if}
 		<div>
 			<label for="name">Name</label> <input id="name" name="name" value={$item.name} />

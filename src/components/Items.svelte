@@ -1,20 +1,12 @@
 <script>
 	export let items;
-	/*
-	let selected;
-	items.onTransition((state) => {
-		if (state.context && state.context.selected) {
-			console.log(state.context.selected);
-			selected = state.context.selected;
-		}
-	});
-	*/
-	// import { derived } from 'svelte/store';
-	// const selected = derived(items, ($items) => $items.state.context.selected);
 	import Item from '$components/Item.svelte';
+
+	import Debug from './Debug.svelte';
 </script>
 
 <section style="outline: solid 1px red; padding: 0.5em;">
+	<Debug store={items} />
 	<h1>Items</h1>
 	{#if $items.state.matches('initialized')}
 		<pre>/items</pre>
@@ -26,7 +18,6 @@
 						href="/items/{item.name}"
 						on:click|preventDefault={(event) => {
 							items.send('select', { item });
-							$items.selected.send('initialize', item);
 						}}>{item.name}</a
 					>
 				</li>
