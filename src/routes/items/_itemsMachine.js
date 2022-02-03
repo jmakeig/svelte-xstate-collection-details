@@ -1,4 +1,38 @@
 import { createMachine, assign, spawn, send, interpret } from 'xstate';
+/* https://stately.ai/viz/8f598538-e034-48f7-a3be-d2a53022a3b4 */
+/*
+Item Script:
+
+{
+  "type": "initialize",
+  "item": {
+    "name": "A"
+  }
+}
+
+{
+  "type": "edit"
+}
+
+{
+  "type": "update",
+  "item": { "name": "A", "description": "NEW" }
+}
+
+{
+  "type": "rollback",
+  "message": "Seriously?"
+}
+
+{
+  "type": "update",
+  "item": { "name": "A", "description": "ANOTHER" }
+}
+
+{
+  "type": "commit"
+}
+*/
 
 function fetchItemsDummy(filter) {
 	return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
@@ -31,7 +65,9 @@ const itemDef = {
 				/*
         {
           "type": "initialize",
-          "id": "X"
+          "item": {
+            "name": "A"
+          }
         }
         */
 				initialize: {
@@ -67,90 +103,108 @@ const itemDef = {
 		},
 		initialized: {
 			id: 'initialized',
-			type: 'parallel',
+			initial: 'viewing',
 			states: {
-				mutated: {
-					initial: 'clean',
+				viewing: {
+					id: 'viewing',
 					on: {
-						/*
-            {
-              "type": "update",
-              "item": { "name": "B", "description": "Some B" }
-            }
-            */
-						update: {
-							target: '.dirty',
-							actions: ['log', 'store']
-						}
-					},
+						edit: { target: 'editing' }
+					}
+				},
+				editing: {
+					id: 'editing',
+					type: 'parallel',
+					initial: ['mutated.clean', 'validated.indterminate'],
 					states: {
-						clean: {},
-						dirty: {
-							id: 'dirty',
-							initial: 'editing',
+						mutated: {
+							initial: 'clean',
 							on: {
 								/*
                 {
-                  "type": "close",
+                  "type": "update",
+                  "item": { "name": "A", "description": "Some B" }
                 }
                 */
-								close: {
-									target: '.confirming'
-								},
-								save: {
-									target: '.saving',
-									cond: 'isValid' // Is this right?
+								update: {
+									target: '.dirty',
+									actions: ['log', 'store']
 								}
 							},
 							states: {
-								editing: {},
-								saving: {
-									invoke: {
-										src: 'persistItem',
-										onDone: {
-											target: '#initialized',
-											actions: ['log', 'load']
-										},
-										onError: {
-											target: '#error'
-										}
-									}
+								clean: {
+									id: 'clean'
 								},
-								confirming: {
-									invoke: {
-										src: 'confirm'
-									},
+								dirty: {
+									id: 'dirty',
 									on: {
-										no: {
-											target: '#dirty'
+										/*
+                    {
+                      "type": "rollback",
+                    }
+                    */
+										rollback: {
+											target: '#confirming'
 										},
-										yes: {
-											target: '#unloaded'
+										commit: {
+											target: '#committing',
+											cond: 'isValid' // Is this right?
+											// You can use (context, event {state}) => state.matches() to get validation state
 										}
 									}
 								}
 							}
+						},
+						validated: {
+							initial: 'indeterminate',
+							on: {
+								update: [{ target: '.valid', cond: 'isValid' }, { target: '.invalid' }]
+							},
+							states: {
+								indeterminate: {},
+								valid: {},
+								invalid: {}
+							}
 						}
 					}
 				},
-				validated: {
-					initial: 'indeterminate',
-					on: {
-						update: [{ target: '.valid', cond: 'isValid' }, { target: '.invalid' }]
+				confirming: {
+					id: 'confirming',
+					invoke: {
+						src: 'confirm'
 					},
-					states: {
-						indeterminate: {},
-						valid: {},
-						invalid: {}
+					on: {
+						no: {
+							target: '#dirty'
+						},
+						yes: {
+							target: '#editing',
+							actions: ['log', 'restoreCache']
+						}
+					}
+				},
+				committing: {
+					id: 'committing',
+					invoke: {
+						src: 'persistItem',
+						onDone: {
+							target: '#initialized', // This will go back to #view. What if the user just wants to save and stay in edit mode?
+							actions: ['log', 'load']
+						},
+						onError: {
+							target: '#error'
+						}
 					}
 				}
 			}
-		},
-		unloaded: {
-			id: 'unloaded',
-			entry: ['log', 'unload'],
-			type: 'final'
 		}
+		/*
+    // Use raise() action to queue up confirm?
+    unloaded: {
+      id: "unloaded",
+      entry: ["log", "unload"],
+      type: "final",
+    },
+    */
 	}
 };
 
@@ -163,6 +217,9 @@ const itemConfig = {
 			errors: null
 		})),
 		store: assign({ item: (context, { item }) => item }),
+		cache: assign({ cache: (context, { item }) => item }),
+		restoreCache: assign({ item: (context, event) => context.cache }),
+		clearCache: assign({ cache: null }),
 		unload: assign({ item: null, cache: null, errors: null })
 	},
 	guards: {
@@ -172,7 +229,10 @@ const itemConfig = {
 		loadItem: (context, { item }) => fetchItemDummy(item.name),
 		persistItem: ({ item }, event) => persistItemDummy(item),
 		confirm: (context, event) => (callback, onReceive) => {
-			callback('yes');
+			const msg = event.message || 'Are you sure?';
+			const choice = event.choice || 'yes';
+			console.log(`${msg} ${choice}`);
+			callback(choice);
 			return () => {};
 		}
 	}
@@ -204,7 +264,7 @@ const itemsDef = {
 						src: 'loadItems',
 						onDone: {
 							target: '#itemsMachine.initialized',
-							actions: [assign({ items: (context, { data }) => data })]
+							actions: [assign({ items: (context, event) => event.data })]
 						},
 						onError: {
 							target: 'error'
@@ -278,9 +338,15 @@ const itemsConfig = {
 				return ref;
 			}
 		}),
-		initializeSelectedItem: send((context, event) => ({ type: 'initialize', item: event.item }), {
-			to: ({ selected }) => selected
-		}),
+		initializeSelectedItem: send(
+			(context, event) => {
+				//console.log("send", event);
+				return { type: 'initialize', item: event.item };
+			},
+			{
+				to: ({ selected }) => selected
+			}
+		),
 		clearSelection: assign({
 			selected: (context, event) => {
 				context.selected.stop(); // Is this right?
