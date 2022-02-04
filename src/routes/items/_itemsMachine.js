@@ -51,30 +51,11 @@ function persistItemDummy(item) {
 }
 
 const itemDef = {
+	context: { item: null, errors: null, cache: null },
 	id: 'itemMachine',
-	context: {
-		item: null,
-		errors: null,
-		cache: null
-	},
 	initial: 'uninitialized',
 	states: {
 		uninitialized: {
-			id: 'uninitialized',
-			on: {
-				/*
-        {
-          "type": "initialize",
-          "item": {
-            "name": "A"
-          }
-        }
-        */
-				initialize: {
-					target: '.loading',
-					internal: false
-				}
-			},
 			initial: 'idle',
 			states: {
 				idle: {},
@@ -82,129 +63,118 @@ const itemDef = {
 					invoke: {
 						id: 'loadItem',
 						src: 'loadItem',
-						onDone: {
-							target: '#initialized',
-							actions: ['log', 'load']
-						},
-						onError: {
-							target: 'error'
-						}
+						onDone: [
+							{
+								actions: ['log', 'load'],
+								target: '#itemMachine.initialized'
+							}
+						],
+						onError: [
+							{
+								target: '#itemMachine.uninitialized.error'
+							}
+						]
 					}
 				},
-				error: {
-					id: 'error',
-					actions: [
-						assign({
-							errors: (context, event) => [event.error]
-						})
-					]
+				error: {}
+			},
+			on: {
+				initialize: {
+					target: '#itemMachine.uninitialized.loading'
 				}
 			}
 		},
 		initialized: {
-			id: 'initialized',
 			initial: 'viewing',
 			states: {
 				viewing: {
-					id: 'viewing',
 					on: {
-						edit: { target: 'editing' }
+						edit: {
+							target: '#itemMachine.initialized.editing'
+						}
 					}
 				},
 				editing: {
-					id: 'editing',
 					type: 'parallel',
-					initial: ['mutated.clean', 'validated.indterminate'],
 					states: {
 						mutated: {
 							initial: 'clean',
-							on: {
-								/*
-                {
-                  "type": "update",
-                  "item": { "name": "A", "description": "Some B" }
-                }
-                */
-								update: {
-									target: '.dirty',
-									actions: ['log', 'store']
-								}
-							},
 							states: {
-								clean: {
-									id: 'clean'
-								},
+								clean: {},
 								dirty: {
-									id: 'dirty',
 									on: {
-										/*
-                    {
-                      "type": "rollback",
-                    }
-                    */
 										rollback: {
-											target: '#confirming'
+											target: '#itemMachine.initialized.confirming'
 										},
 										commit: {
-											target: '#committing',
-											cond: 'isValid' // Is this right?
-											// You can use (context, event {state}) => state.matches() to get validation state
+											cond: 'isValid',
+											target: '#itemMachine.initialized.committing'
 										}
 									}
+								}
+							},
+							on: {
+								update: {
+									actions: ['log', 'store'],
+									target: '#itemMachine.initialized.editing.mutated.dirty'
 								}
 							}
 						},
 						validated: {
 							initial: 'indeterminate',
-							on: {
-								update: [{ target: '.valid', cond: 'isValid' }, { target: '.invalid' }]
-							},
 							states: {
 								indeterminate: {},
 								valid: {},
 								invalid: {}
+							},
+							on: {
+								update: [
+									{
+										cond: 'isValid',
+										target: '#itemMachine.initialized.editing.validated.valid'
+									},
+									{
+										target: '#itemMachine.initialized.editing.validated.invalid'
+									}
+								]
 							}
 						}
 					}
 				},
 				confirming: {
-					id: 'confirming',
 					invoke: {
+						id: 'confirm',
 						src: 'confirm'
 					},
 					on: {
 						no: {
-							target: '#dirty'
+							target: '#itemMachine.initialized.editing.mutated.dirty'
 						},
 						yes: {
-							target: '#editing',
-							actions: ['log', 'restoreCache']
+							actions: ['log', 'restoreCache'],
+							target: '#itemMachine.initialized.editing'
 						}
 					}
 				},
 				committing: {
-					id: 'committing',
 					invoke: {
+						id: 'persistItem',
 						src: 'persistItem',
-						onDone: {
-							target: '#initialized', // This will go back to #view. What if the user just wants to save and stay in edit mode?
-							actions: ['log', 'load']
-						},
-						onError: {
-							target: '#error'
-						}
+						onDone: [
+							{
+								actions: ['log', 'load'],
+								target: '#itemMachine.initialized'
+							}
+						],
+						onError: [
+							{
+								target: '#itemMachine.uninitialized.error'
+							}
+						]
 					}
 				}
 			}
 		}
-		/*
-    // Use raise() action to queue up confirm?
-    unloaded: {
-      id: "unloaded",
-      entry: ["log", "unload"],
-      type: "final",
-    },
-    */
 	}
 };
 
@@ -238,7 +208,9 @@ const itemConfig = {
 	}
 };
 
-const itemMachine = createMachine(itemDef, itemConfig);
+const itemMachine = 
+/** @xstate-layout N4IgpgJg5mDOIC5QEsAuYC2BZAhgYwAtkA7MAOgFdiS1kcAbZAL0jPoHscISoBiCdqTIkAbuwDW5DlwCS6DIlAAHdrFqDFIAB6IATAGYAjAHYyABgtndZwwDYTt-QBoQAT0QBOfectmArIb61gAcfrq6AL4RLmiYuIQk5FQ0qHSMLBBsnNzEfGAATvns+WRK9DioAGbFGFmy8poqaqkaSNp6drZkugAsHh7GQfoewT2GLu4Igca6ZMH6QcbB4T0B+j1RMfLxRELJ1KkMzJC8KWnHjarqxJo6U8vehr0jA-p+y14TiIHBHnMLumM-TeIVsmxAsWw+F25DORwyZBEyDAAHceLxIGhLs1kK1QHd9GYemRjLY-LZ-H5jIEPCYvlMjMEyP1+oYvGEPD1bMFwZCdolhAdzgjMalcmQMBRUBVWNx8qhXLwivR6AAjfDibHXW6IYzGYl+XyGea6YLBYx+ekLP6Go0ms0eXnbaECuHpViingSqUyzJyhW8PDsDAYLFtJratp3DxWOY9fT6pYWPzrDz0wydf6LAJmYIUsJOuIuoRu46ZT3iyXS9AQXgUJQQGValo3KOIKmzfo9PXhfTBfzzdMLMxkPr9XSchbLPOFqEJEtC+Ee7hiqCIo6Nmt1htN8NXFs6hApkeDeOOc9mAb06mmMceKm2CkT4yz-kL2hLzJB4iVZD5UO5LwxDsM2uKtviiCEsSpLkpS1LDHSbjfBmnYsuS+p9im+ivsWsKLu6X6CL+-7oq4cCgXi7QIFBJJkvmVI0ohkwZqSzIssMATdoYNg4fOeEfgRZBBiGaCrvwgh4WIkilAUaiwKgciYBR4FUYEhjEgY8Z+GM-i5nY6ZmEEZALEEeZvIZhgBLxMKCgJZZCcGoaoGJBRFCUZQVNU-4yfkckKQ0e44pRdyWbYfxmLYzzrDYFJcumBimPMiw9P2RgGH4UTRCAwEQORbR8rhlDUPh9nIBA9BgMph7GkZeY3o+oQeI4ujphm3gmbo9j+LYXI9dZAr7HZCLSDkUBVW2Uz3n4xl+F4FILNy-RDmSxkAo+xqhAEPJZQVfFFaWIqFMU40QQgBhhTN7LGIZeoxfFKVkJ0s1LBmbL9XsxVDZAJ2qUCfxPH0vyDO8E7OEhUxWF0HV+LNvR9oE738YcglIqiPA-SFAQkoZuaGvGul5kObJsf0ekzACL47c6e0HcutCVj6NZCRVOAqRGB4TR2bHdjMBj9u8YPMWYSyjiycM2BhkRU0WNMlSKK5elWvpkP6kzKPuYGHtdI42ESwt5maEUteDTyBKtQRdeSvWU1sMs2bT5YKwz1bfYFkandpTJdj2fMDoLni0qLrK0mFZLbbbc723LdOruujCbqwJC5egJHELu6tBSpdzHiS6z6Oe+eXsY9I9V0d5hGEywZuHELU1HX2O-Ta4iBuyst-HGO6uExkxpFeZknqAT0v2Zfse8KVeH0iO2cj9kVs3rdM6IG6d0es1kDDXLmv3VIWvSVLTXe3bDPYnVgtLkeutHjex+3ZW+qvhpdKe+evxSV7gylTJH+EPVEoEGUL5viRsKGO6M3Yc1OilWYL8C7v2Lp-M2d4KREkJIaGcQDCoOwcj+P8AExoQM1hNc0rUeokjHLoEwbxtY112vXWeCJhJOVXKvbi5o4wJh6GMdYFomqtSaubXQs11i7xMNPB2q9HD0k6sSO895-BPEMmSRGq9hjpiZL4TRvgqSZQiEAA */
+createMachine(itemDef, itemConfig);
 
 const itemsDef = {
 	id: 'itemsMachine',

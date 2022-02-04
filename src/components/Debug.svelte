@@ -13,7 +13,7 @@
 	}
 </script>
 
-<details>
+<details open>
 	<summary>{$store.state.toStrings().slice(-1)}</summary>
 	State
 	<pre>{JSON.stringify($store.state.value, null, 2)}</pre>
