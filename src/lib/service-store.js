@@ -12,12 +12,16 @@ export function serviceStore(service, key = 'data', selector = (context, key) =>
 		service.subscribe((state) => {
 			// console.log(`${service.machine.id}#subscribe`);
 			// if (false !== state.changed) {
-			if (state.context[key]) {
-				//console.log('Object.assign()', Object.assign(state.context[key], { state }).state);
-				set(Object.assign(selector(state.context, key), { state }));
-			} else {
-				set({ state });
-			}
+			const o = state.context[key] ? selector(state.context, key) : {};
+			set(
+				Object.defineProperty(o, 'state', {
+					get() {
+						return state;
+					},
+					enumerable: false,
+					configurable: true
+				})
+			);
 			// }
 		});
 		service.start();
