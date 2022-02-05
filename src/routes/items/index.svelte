@@ -1,7 +1,7 @@
 <script context="module">
-	import { createItemsStore } from './_itemsMachine';
+	import { createItemsStore } from './_items';
 	export function load({ params, fetch }) {
-		const items = createItemsStore(async () => fetch(`/items.json`).then((r) => r.json()));
+		const items = createItemsStore(fetch);
 		items.send('initialize');
 		return {
 			props: { items }
