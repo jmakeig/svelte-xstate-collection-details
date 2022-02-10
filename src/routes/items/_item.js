@@ -148,8 +148,8 @@ export function createItemMachine(fetch) {
 											// 		}
 											// 	}
 											// },
-											cancelling: {
-												entry: 'cancelling',
+											resetting: {
+												//entry: 'resetting',
 												on: {
 													no: {
 														internal: true,
@@ -202,8 +202,8 @@ export function createItemMachine(fetch) {
 														cond: 'is_valid_state',
 														target: '#Item.initialized.saving'
 													},
-													cancel: {
-														target: '#Item.initialized.editing.mutated.dirty.cancelling'
+													reset: {
+														target: '#Item.initialized.editing.mutated.dirty.resetting'
 													},
 													unload: {
 														target: '#Item.initialized.editing.mutated.dirty.unloading'

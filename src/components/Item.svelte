@@ -90,11 +90,28 @@
 						!$item.state.matches('initialized.editing.validated.invalid')
 					)}>Save</button
 				>
-				<button disabled={!$item.state.matches('initialized.editing.mutated.dirty')}>Cancel</button>
+				<button
+					type="reset"
+					disabled={!$item.state.matches('initialized.editing.mutated.dirty')}
+					on:click|preventDefault={(event) => item.send('reset')}>Cancel</button
+				>
 			{/if}
 		</form>
 	{/if}
 </section>
+
+{#if $item.state.matches('initialized.editing.mutated.dirty.resetting')}
+	<div>
+		Are you sure?
+		<button
+			type="button"
+			class="default"
+			value="yes"
+			on:click={(event) => item.send(event.target.value)}>Yes</button
+		>
+		<button type="button" on:click={(event) => item.send(event.target.value)} value="no">No</button>
+	</div>
+{/if}
 
 <style>
 	form > div {
