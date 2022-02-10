@@ -1,6 +1,37 @@
 <script>
 	export let item; // Actor
 	import Debug from './Debug.svelte';
+
+	function valid(node, initial) {
+		const { name } = node;
+		return {
+			update(validation) {
+				if (0 === validation.length) {
+					node.setCustomValidity('');
+					node.setAttribute('aria-invalid', 'false');
+					node.removeAttribute('aria-errormessage');
+				} else {
+					node.setCustomValidity(validation[0].message);
+					node.setAttribute('aria-invalid', 'false');
+					node.setAttribute('aria-errormessage', `${name}-error`);
+				}
+			},
+			destroy() {
+				// the node has been removed from the DOM
+			}
+		};
+	}
+
+	import { derived } from 'svelte/store';
+	const validation = derived(item, ($item) => $item.state.context.validation);
+
+	function named(validation, name) {
+		if (!Array.isArray(validation)) return validation;
+		if (!name) return validation;
+		return validation.filter((v) => name === v.for);
+	}
+
+	// $: console.log('$validation', $validation);
 </script>
 
 <section style="outline: solid 1px red; padding: 0.5em; position: relative;">
@@ -8,15 +39,18 @@
 	<h2>Item</h2>
 	{#if $item.state.matches('initialized')}
 		<form
+			aria-label="Edit item"
 			on:submit|preventDefault={(event) => console.log('submit')}
 			on:input={(event) => {
-				console.log(event.currentTarget);
-				const it = event.currentTarget;
-				item.send('update', { item: { name: it.name.value, description: it.description.value } });
+				// console.log(event.currentTarget);
+				const form = event.currentTarget;
+				item.send('update', {
+					item: { name: form.name.value, description: form.description.value }
+				});
 			}}
 		>
 			{#if $item.state.matches('initialized.editing.validated.invalid')}
-				<output>Yo! There are some errors: {$item.state.context.errors}</output>
+				<!-- <output>Yo! There are some errors: {$validation.length}</output> -->
 			{/if}
 			<div>
 				<label for="name">Name</label>
@@ -26,7 +60,15 @@
 					name="name"
 					value={$item.name}
 					readonly={!$item.state.matches('initialized.editing')}
+					use:valid={named($validation, 'name')}
 				/>
+				{#if named($validation, 'name').length > 0}
+					<div class="error" id="name-error">
+						{#each named($validation, 'name') as { message }}
+							{message}
+						{/each}
+					</div>
+				{/if}
 			</div>
 			<div>
 				<label for="description">Description</label>
@@ -59,6 +101,7 @@
 		display: flex;
 		flex-direction: row;
 		align-items: baseline;
+		gap: 0 1em;
 
 		margin: 1em 0;
 	}
@@ -76,11 +119,21 @@
 		border-radius: 0.4em;
 		padding: 0.5em;
 		width: 20em;
+
+		transition-property: background-color, color, border-color;
+		transition-duration: 0.1s;
+		transition-timing-function: ease-in;
 	}
 	input[type='text']:read-only,
 	textarea:read-only {
 		border-color: transparent;
 		pointer-events: none;
+	}
+	input[type='text']:invalid,
+	textarea:invalid {
+		background-color: var(--color-rose-100);
+		color: var(--color-rose-600);
+		border-color: var(--color-rose-600);
 	}
 	textarea {
 		min-height: 4em;
