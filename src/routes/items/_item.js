@@ -8,11 +8,68 @@ function fetchItemDummy(id) {
 	return Promise.resolve(item);
 }
 
-function persistItemDummy(item) {
+function persistDummy(item) {
 	return Promise.resolve(Object.assign({ updated: new Date().toISOString() }, item));
 }
 
-//export const itemMachine = createMachine(itemDef, itemConfig);
+function validate(item) {
+	const validation = [];
+	if ('blah' === item.name) {
+		validation.push({ for: 'name', message: `Name cant be 'blah'` });
+	}
+	return Promise.resolve(validation);
+}
+
+/*
+
+{
+	"type": "initialize",
+	"item": {
+		"name": "A"
+	}
+}
+
+{
+	"type": "edit"
+}
+
+// Valid
+
+{
+	"type": "update",
+	"item": {
+		"name": "A",
+		"description": "Another"
+	}
+}
+
+// Invalid
+
+{
+	"type": "update",
+	"item": {
+		"name": "blah",
+		"description": "Another"
+	}
+}
+
+// Valid, again
+
+{
+	"type": "update",
+	"item": {
+		"name": "A",
+		"description": "Yet another"
+	}
+}
+
+// Persisted
+
+{
+  "type":"commit"
+}
+
+*/
 export function createItemMachine(fetch) {
 	const itemDef = {
 		context: { item: null, errors: null, cache: null },
@@ -25,17 +82,17 @@ export function createItemMachine(fetch) {
 					idle: {},
 					loading: {
 						invoke: {
-							id: 'loadItem',
-							src: 'loadItem',
+							id: 'load',
+							src: 'load',
 							onDone: [
 								{
 									actions: ['log', 'load'],
-									target: '#itemMachine.initialized'
+									target: '#initialized'
 								}
 							],
 							onError: [
 								{
-									target: '#itemMachine.uninitialized.error'
+									target: 'error'
 								}
 							]
 						}
@@ -44,17 +101,18 @@ export function createItemMachine(fetch) {
 				},
 				on: {
 					initialize: {
-						target: '#itemMachine.uninitialized.loading'
+						target: '.loading'
 					}
 				}
 			},
 			initialized: {
+				id: 'initialized',
 				initial: 'viewing',
 				states: {
 					viewing: {
 						on: {
 							edit: {
-								target: '#itemMachine.initialized.editing'
+								target: 'editing'
 							}
 						}
 					},
@@ -68,11 +126,11 @@ export function createItemMachine(fetch) {
 									dirty: {
 										on: {
 											rollback: {
-												target: '#itemMachine.initialized.confirming'
+												target: '#confirming'
 											},
 											commit: {
-												cond: 'isValid',
-												target: '#itemMachine.initialized.committing'
+												cond: 'is_valid',
+												target: '#committing'
 											}
 										}
 									}
@@ -88,24 +146,41 @@ export function createItemMachine(fetch) {
 								initial: 'indeterminate',
 								states: {
 									indeterminate: {},
+									validating: {
+										entry: ['clear_validation'],
+										invoke: {
+											src: 'validate',
+											onDone: [
+												{
+													target: 'valid',
+													cond: (context, { data }) => 0 === data.length,
+													actions: ['store_validation']
+												},
+												{
+													target: 'invalid',
+													cond: (context, { data }) => 0 < data.length,
+													actions: ['store_validation']
+												}
+											],
+											onError: {
+												// target: '#error',
+												// actions: ['store_error']
+											}
+										}
+									},
 									valid: {},
 									invalid: {}
 								},
 								on: {
-									update: [
-										{
-											cond: 'isValid',
-											target: '#itemMachine.initialized.editing.validated.valid'
-										},
-										{
-											target: '#itemMachine.initialized.editing.validated.invalid'
-										}
-									]
+									update: {
+										target: '.validating'
+									}
 								}
 							}
 						}
 					},
 					confirming: {
+						id: 'confirming',
 						invoke: {
 							id: 'confirm',
 							src: 'confirm'
@@ -121,9 +196,10 @@ export function createItemMachine(fetch) {
 						}
 					},
 					committing: {
+						id: 'committing',
 						invoke: {
-							id: 'persistItem',
-							src: 'persistItem',
+							id: 'persist',
+							src: 'persist',
 							onDone: [
 								{
 									actions: ['log', 'load'],
@@ -152,18 +228,26 @@ export function createItemMachine(fetch) {
 			})),
 			store: assign({ item: (context, { item }) => item }),
 			// cache: assign({ cache: (context, { item }) => item }),
-			restoreCache: assign({ item: (context, event) => context.cache })
+			restoreCache: assign({ item: (context, event) => context.cache }),
 			// clearCache: assign({ cache: null }),
 			// unload: assign({ item: null, cache: null, errors: null })
+			clear_validation: assign({
+				validation: []
+			}),
+			store_validation: assign({
+				validation: ({ validation }, { data }) => [...validation, ...data]
+			})
 		},
 		guards: {
-			isValid: (context, event) => 0 === Math.trunc((Math.random() * 10) % 2)
+			is_valid: (context, event, { state }) =>
+				!state.matches('initialized.editing.validated.invalid')
 		},
 		services: {
 			// TODO
-			loadItem: (context, { item }) => fetchItemDummy(item.name),
+			load: (context, { item }) => fetchItemDummy(item.name),
+			validate: ({ item }, event) => validate(item),
 			// TODO
-			persistItem: ({ item }, event) => persistItemDummy(item),
+			persist: ({ item }, event) => persistDummy(item),
 			confirm: (context, event) => (callback, onReceive) => {
 				const msg = event.message || 'Are you sure?';
 				const choice = event.choice || 'yes';
@@ -176,3 +260,5 @@ export function createItemMachine(fetch) {
 
 	return createMachine(itemDef, itemConfig);
 }
+
+//const M = createItemMachine(() => {});

@@ -1,7 +1,5 @@
 <script>
 	export let item; // Actor
-
-	import { State } from 'xstate';
 	import Debug from './Debug.svelte';
 </script>
 
@@ -17,7 +15,7 @@
 				item.send('update', { item: { name: it.name.value, description: it.description.value } });
 			}}
 		>
-			{#if $item.state.matches('initialized.validated.invalid')}
+			{#if $item.state.matches('initialized.editing.validated.invalid')}
 				<output>Yo! There are some errors: {$item.state.context.errors}</output>
 			{/if}
 			<div>
