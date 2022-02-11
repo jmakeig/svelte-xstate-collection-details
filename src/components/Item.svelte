@@ -5,7 +5,7 @@
 	const validation = validationStore(item);
 
 	import { metadata } from '$lib/service-store';
-	import { message } from '$lib/l10n';
+	import { local } from '$lib/l10n';
 
 	import Debug from './Debug.svelte';
 </script>
@@ -41,7 +41,7 @@
 				{#if named($validation, 'name').length > 0}
 					<div class="error" id="name-error">
 						{#each named($validation, 'name') as { message }}
-							{message}
+							{local(message)}
 						{/each}
 					</div>
 				{/if}
@@ -78,19 +78,19 @@
 
 {#if $item.state.matches('initialized.editing.mutated.dirty.resetting')}
 	<div>
-		<p id="reset-message">{message(metadata($item.state).message)}</p>
+		<p id="reset-message">{local(metadata($item.state).message)}</p>
 		<button
 			type="button"
 			class="default"
 			on:click={(event) => item.send(event.target.value)}
 			value="no"
-			aria-describedby="reset-message">{message(metadata($item.state).options[0])}</button
+			aria-describedby="reset-message">{local(metadata($item.state).options[0])}</button
 		>
 		<button
 			type="button"
 			value="yes"
 			on:click={(event) => item.send(event.target.value)}
-			aria-describedby="reset-message">{message(metadata($item.state).options[1])}</button
+			aria-describedby="reset-message">{local(metadata($item.state).options[1])}</button
 		>
 	</div>
 {/if}

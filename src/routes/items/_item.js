@@ -16,7 +16,7 @@ function persistDummy(item) {
 function validate(item) {
 	const validation = [];
 	if ('blah' === item.name) {
-		validation.push({ for: 'name', message: `Name can’t be 'blah'` });
+		validation.push({ for: 'name', message: { en: `Name can’t be ‘blah’` } });
 	}
 	return Promise.resolve(validation);
 }

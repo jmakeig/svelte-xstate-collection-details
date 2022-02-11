@@ -4,6 +4,14 @@ export function validationStore(store) {
 	return derived(store, ($store) => $store.state.context.validation);
 }
 
+import { local } from '$lib/l10n';
+
+/**
+ *
+ * @param {Array} validation `{ for: '', message: ''}`
+ * @param {string} name
+ * @returns
+ */
 export function named(validation, name) {
 	if (!Array.isArray(validation)) return validation;
 	if (!name) return validation;
@@ -19,7 +27,7 @@ export function valid(node, initial) {
 				node.setAttribute('aria-invalid', 'false');
 				node.removeAttribute('aria-errormessage');
 			} else {
-				node.setCustomValidity(validation[0].message);
+				node.setCustomValidity(local(validation[0].message));
 				node.setAttribute('aria-invalid', 'false');
 				node.setAttribute('aria-errormessage', `${name}-error`);
 			}

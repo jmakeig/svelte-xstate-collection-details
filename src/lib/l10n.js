@@ -5,7 +5,7 @@
  * @return {string}
  * @throws {ReferenceError} avoids coercing `undefined` if no message is found for `language ` and `fallback` is not a `string`
  */
-export function message(message, fallback = '', language) {
+export function local(message, fallback = '', language) {
 	if ('string' === typeof message) return message;
 	language = language || window?.navigator?.language || 'en';
 	if (language in message) return message[language];
