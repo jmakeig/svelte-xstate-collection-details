@@ -99,18 +99,18 @@ export function createItemsMachine(fetch) {
 	const itemsConfig = {
 		actions: {
 			selectItem: assign({
-				selected: (context, { item }) => {
+				selected: (context, { id }) => {
 					const itemMachine = createItemMachine(fetch);
-					const ref = spawn(itemMachine, `item-${item.name}`);
+					const ref = spawn(itemMachine, `item-${id}`);
 					ref.machine = itemMachine;
 					return ref;
 				}
 			}),
 			initializeSelectedItem: send(
-				(context, event) => {
-					//console.log("send", event);
-					return { type: 'initialize', item: event.item };
-				},
+				(context, { id }) => ({
+					type: 'initialize',
+					id
+				}),
 				{
 					to: ({ selected }) => selected
 				}

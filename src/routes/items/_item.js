@@ -1,6 +1,8 @@
 import { createMachine, assign, actions } from 'xstate';
 const { raise } = actions;
 
+const base = 'https://jmakeig-svelte-xstate-collection-details-q6vvj4h4vxg-3000.githubpreview.dev';
+
 function fetchItemDummy(id) {
 	const item = {
 		name: id,
@@ -354,11 +356,12 @@ export function createItemMachine(fetch) {
 				state.matches('initialized.editing.validated.valid')
 		},
 		services: {
-			load: (context, { id }) =>
-				Promise.resolve({
-					name: 'dummy-' + new Date().toISOString(),
-					description: `Random: ${Math.random().toFixed()}`
-				}),
+			// load: (context, { id }) =>
+			// 	Promise.resolve({
+			// 		name: 'dummy-' + new Date().toISOString(),
+			// 		description: `Random: ${Math.random().toFixed()}`
+			// 	}),
+			load: (context, { id }) => fetch(base + `/items/${id}.json`).then((r) => r.json()),
 			persist: ({ item }) => Promise.resolve({ ...item, updated: new Date().toISOString() }),
 			validate: ({ item }, event) => validate(item)
 		},

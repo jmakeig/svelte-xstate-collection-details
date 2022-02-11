@@ -16,7 +16,7 @@
 					<a
 						href="/items/{item.name}"
 						on:click|preventDefault={(event) => {
-							items.send('select', { item });
+							items.send('select', { id: item.id });
 						}}>{item.name}</a
 					>
 				</li>
