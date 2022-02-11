@@ -41,3 +41,13 @@ function log(f) {
 		return f(...args);
 	};
 }
+
+/**
+ * Reduces the `meta` properties over all states
+ * @param {object} state
+ * @param {object} state.meta an object with the XState metadata property
+ * @return {object}
+ */
+export function metadata({ meta }) {
+	return Object.keys(meta).reduce((acc, key) => Object.assign(acc, meta[key]), {});
+}

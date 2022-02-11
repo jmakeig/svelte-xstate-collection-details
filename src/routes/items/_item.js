@@ -164,9 +164,10 @@ export function createItemMachine(fetch) {
 													message: {
 														en: 'Are you sure you want to cancel your edits? '
 													},
-													options: {
-														en: ['No', 'Yes']
-													}
+													options: [
+														{ en: 'No', fr: 'Non' },
+														{ en: 'Yes', fr: 'Oui' }
+													]
 												}
 											},
 											unloading: {

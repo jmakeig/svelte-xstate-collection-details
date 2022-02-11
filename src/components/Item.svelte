@@ -1,37 +1,13 @@
 <script>
 	export let item; // Actor
+
+	import { validationStore, valid, named } from '$lib/validation';
+	const validation = validationStore(item);
+
+	import { metadata } from '$lib/service-store';
+	import { message } from '$lib/l10n';
+
 	import Debug from './Debug.svelte';
-
-	function valid(node, initial) {
-		const { name } = node;
-		return {
-			update(validation) {
-				if (0 === validation.length) {
-					node.setCustomValidity('');
-					node.setAttribute('aria-invalid', 'false');
-					node.removeAttribute('aria-errormessage');
-				} else {
-					node.setCustomValidity(validation[0].message);
-					node.setAttribute('aria-invalid', 'false');
-					node.setAttribute('aria-errormessage', `${name}-error`);
-				}
-			},
-			destroy() {
-				// the node has been removed from the DOM
-			}
-		};
-	}
-
-	import { derived } from 'svelte/store';
-	const validation = derived(item, ($item) => $item.state.context.validation);
-
-	function named(validation, name) {
-		if (!Array.isArray(validation)) return validation;
-		if (!name) return validation;
-		return validation.filter((v) => name === v.for);
-	}
-
-	// $: console.log('$validation', $validation);
 </script>
 
 <section style="outline: solid 1px red; padding: 0.5em; position: relative;">
@@ -102,14 +78,20 @@
 
 {#if $item.state.matches('initialized.editing.mutated.dirty.resetting')}
 	<div>
-		Are you sure?
+		<p id="reset-message">{message(metadata($item.state).message)}</p>
 		<button
 			type="button"
 			class="default"
-			value="yes"
-			on:click={(event) => item.send(event.target.value)}>Yes</button
+			on:click={(event) => item.send(event.target.value)}
+			value="no"
+			aria-describedby="reset-message">{message(metadata($item.state).options[0])}</button
 		>
-		<button type="button" on:click={(event) => item.send(event.target.value)} value="no">No</button>
+		<button
+			type="button"
+			value="yes"
+			on:click={(event) => item.send(event.target.value)}
+			aria-describedby="reset-message">{message(metadata($item.state).options[1])}</button
+		>
 	</div>
 {/if}
 
