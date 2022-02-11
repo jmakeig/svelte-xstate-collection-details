@@ -120,8 +120,8 @@ export function createItemMachine(fetch) {
 										on: {
 											// update: { target: 'updating' },
 											update: {
-												target: '#Item.initialized.editing.mutated.dirty',
-												actions: ['log', 'store']
+												target: '#Item.initialized.editing.mutated.dirty'
+												// actions: ['log', 'store']
 											},
 											view: {
 												target: '#Item.initialized.viewing'
@@ -132,7 +132,7 @@ export function createItemMachine(fetch) {
 										}
 									},
 									dirty: {
-										entry: 'fill_cache',
+										entry: ['fill_cache', 'store'],
 										initial: 'idle',
 										states: {
 											// updating: {
