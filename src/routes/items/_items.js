@@ -134,11 +134,8 @@ import { serviceStore } from '$lib/service-store';
 
 export function createItemsStore(fetch) {
 	const machine = createItemsMachine(fetch);
-	return serviceStore(
-		interpret(machine, { devTools: true }).start(),
-		'items',
-		itemsPropertiesSelector
-	);
+	const options = { devTools: 'development' === import.meta.env.MODE };
+	return serviceStore(interpret(machine, options).start(), 'items', itemsPropertiesSelector);
 }
 
 function itemsPropertiesSelector(context, key) {
