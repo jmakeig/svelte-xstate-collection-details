@@ -134,7 +134,11 @@ import { serviceStore } from '$lib/service-store';
 
 export function createItemsStore(fetch) {
 	const machine = createItemsMachine(fetch);
-	return serviceStore(interpret(machine).start(), 'items', itemsPropertiesSelector);
+	return serviceStore(
+		interpret(machine, { devTools: true }).start(),
+		'items',
+		itemsPropertiesSelector
+	);
 }
 
 function itemsPropertiesSelector(context, key) {

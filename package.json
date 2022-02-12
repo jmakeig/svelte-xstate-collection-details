@@ -18,6 +18,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@xstate/inspect": "^0.6.2",
     "xstate": "^4.30.0"
   }
 }
