@@ -18,22 +18,28 @@ export function named(validation, name) {
 	return validation.filter((v) => name === v.for);
 }
 
+function update_validation(node, validation) {
+	console.log('update_validation', node, validation);
+	if (0 === validation.length) {
+		node.setCustomValidity('');
+		node.setAttribute('aria-invalid', 'false');
+		node.removeAttribute('aria-errormessage');
+	} else {
+		node.setCustomValidity(local(validation[0].message));
+		node.setAttribute('aria-invalid', 'true');
+		node.setAttribute('aria-errormessage', `${name}-error`);
+	}
+}
+
 export function valid(node, initial) {
 	const { name } = node;
+	update_validation(node, initial);
 	return {
 		update(validation) {
-			if (0 === validation.length) {
-				node.setCustomValidity('');
-				node.setAttribute('aria-invalid', 'false');
-				node.removeAttribute('aria-errormessage');
-			} else {
-				node.setCustomValidity(local(validation[0].message));
-				node.setAttribute('aria-invalid', 'false');
-				node.setAttribute('aria-errormessage', `${name}-error`);
-			}
+			update_validation(node, validation);
 		},
 		destroy() {
-			// the node has been removed from the DOM
+			node.setCustomValidity('');
 		}
 	};
 }

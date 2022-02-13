@@ -2,7 +2,8 @@
 	export let item; // Actor
 
 	import { validationStore, valid, named } from '$lib/validation';
-	const validation = validationStore(item);
+	let validation;
+	$: validation = validationStore(item); // Each instance will get a new 
 
 	import { metadata } from '$lib/service-store';
 	import { local } from '$lib/l10n';
