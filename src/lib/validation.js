@@ -19,7 +19,8 @@ export function named(validation, name) {
 }
 
 function update_validation(node, validation) {
-	console.log('update_validation', node, validation);
+	const { name } = node;
+	// console.log('update_validation', node, validation);
 	if (0 === validation.length) {
 		node.setCustomValidity('');
 		node.setAttribute('aria-invalid', 'false');
@@ -32,7 +33,6 @@ function update_validation(node, validation) {
 }
 
 export function valid(node, initial) {
-	const { name } = node;
 	update_validation(node, initial);
 	return {
 		update(validation) {
