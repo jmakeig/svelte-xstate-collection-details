@@ -1,6 +1,18 @@
 import { readable } from 'svelte/store';
 
 /**
+ * This is a hack to support primitive values in the context selector.
+ * It wraps a primitive in its object cousin so that we can add custom
+ * properties, like other objects.
+ *
+ * @param {any} p
+ * @returns {object} “boxed” object for primitives
+ */
+function toObject(p) {
+	return new Object(p);
+}
+
+/**
  *
  * @param {Actor} service
  * @param {string} key
@@ -12,7 +24,7 @@ export function serviceStore(service, key = 'data', selector = (context, key) =>
 		service.subscribe((state) => {
 			// console.log(`${service.machine.id}#subscribe`);
 			// if (false !== state.changed) {
-			const o = state.context[key] ? selector(state.context, key) : {};
+			const o = state.context[key] ? toObject(selector(state.context, key)) : {};
 			set(
 				Object.defineProperty(o, 'state', {
 					get() {
