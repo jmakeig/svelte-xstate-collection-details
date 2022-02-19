@@ -3,10 +3,11 @@
 
 	import { validationStore, valid, named } from '$lib/validation';
 	let validation;
-	$: validation = validationStore(item); // Each instance will get a new 
+	$: validation = validationStore(item); // Each instance will get a new
 
 	import { metadata } from '$lib/service-store';
 	import { local } from '$lib/l10n';
+	import { coalesce } from '$lib/util';
 
 	import Debug from './Debug.svelte';
 </script>
@@ -17,18 +18,19 @@
 	{#if $item.state.matches('initialized')}
 		<form
 			aria-label="Edit item"
-			on:submit|preventDefault={(event) => console.log('submit')}
+			on:submit|preventDefault={(event) => item.send('commit')}
 			on:input={(event) => {
-				// console.log(event.currentTarget);
+				// TODO: Would FormData be more appropriate here?
 				const form = event.currentTarget;
 				item.send('update', {
-					item: { name: form.name.value, description: form.description.value }
+					item: {
+						name: form.name.value,
+						description: form.description.value,
+						updated: form.updated.value
+					}
 				});
 			}}
 		>
-			{#if $item.state.matches('initialized.editing.validated.invalid')}
-				<!-- <output>Yo! There are some errors: {$validation.length}</output> -->
-			{/if}
 			<div>
 				<label for="name">Name</label>
 				<input
@@ -55,8 +57,11 @@
 					readonly={!$item.state.matches('initialized.editing')}>{$item.description}</textarea
 				>
 			</div>
+			<input type="hidden" name="updated" id="updated" value={coalesce($item.updated, '')} />
 			{#if $item.state.matches('initialized.viewing')}
-				<button class="default" on:click={(event) => item.send('edit')}>Edit {$item.name}</button>
+				<button type="button" class="default" on:click={(event) => item.send('edit')}
+					>Edit {$item.name}</button
+				>
 			{/if}
 			{#if $item.state.matches('initialized.editing')}
 				<button

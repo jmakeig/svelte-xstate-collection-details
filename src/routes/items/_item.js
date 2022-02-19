@@ -277,7 +277,7 @@ export function createItemMachine(fetch) {
 							onDone: [
 								{
 									target: '#Item.initialized.editing',
-									actions: ['store']
+									actions: ['log', 'store']
 								}
 							],
 							onError: [
@@ -326,7 +326,7 @@ export function createItemMachine(fetch) {
 
 	const itemConfig = {
 		actions: {
-			log: () => {}, //(context, event) => console.log('log', context, event),
+			log: (context, event) => console.log('log', context, event),
 			fill_cache: assign({
 				cache: ({ item }, event) => item || { dummy: 'dummy' }
 			}),
@@ -362,7 +362,12 @@ export function createItemMachine(fetch) {
 			// 		description: `Random: ${Math.random().toFixed()}`
 			// 	}),
 			load: (context, { id }) => fetch(base + `/items/${id}.json`).then((r) => r.json()),
-			persist: ({ item }) => Promise.resolve({ ...item, updated: new Date().toISOString() }),
+			// persist: ({ item }) => Promise.resolve({ ...item, updated: new Date().toISOString() }),
+			persist: ({ item }) =>
+				fetch(base + `/items/${item.name}.json`, {
+					method: 'put',
+					body: JSON.stringify(item)
+				}).then((r) => r.json()),
 			validate: ({ item }, event) => validate(item)
 		},
 		delays: {
