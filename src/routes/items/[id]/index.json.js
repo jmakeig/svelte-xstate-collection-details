@@ -3,22 +3,7 @@ Object.defineProperty(ValidationError.prototype, 'name', {
 	value: 'ValidationError'
 });
 
-const db = {
-	find_item(id) {
-		return new Promise((resolve) => {
-			setTimeout(resolve, 80); // Simulate an API delay
-		}).then(() => ({
-			id,
-			name: String(id).toUpperCase(),
-			description: `This is the “${id}”.`,
-			updated: new Date().toISOString()
-		}));
-	},
-	update_item(item) {
-		console.log('update_item', item);
-		return Promise.resolve(Object.assign({}, item, { updated: new Date().toISOString() }));
-	}
-};
+import { database as db } from '$lib/db';
 
 export async function get({ params, locals }) {
 	const { id } = params;
