@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import pg from 'pg';
-const { Pool } = pg;
 
 // Transactions: https://node-postgres.com/features/transactions#a-pooled-client-with-asyncawait
 // https://gist.github.com/zerbfra/70b155fa00b4e0d6fd1d4e090a039ad4
@@ -50,45 +49,50 @@ function get_database() {
 			return query(sql);
 		},
 		async find_item(id) {
-			const query = {
-				sql: 'SELECT itemid, name, description, updated FROM items WHERE itemid = @id', // TODO: Filter
-				params: { id }
-			};
-			return ([rows] = await database.run(query));
+			const sql = 'SELECT itemid, name, description, updated FROM items WHERE itemid = $1';
+			return database.query(sql, [id]);
 		},
 		async update_item(item) {
-			database.runTransaction(async (err, transaction) => {
-				if (err) {
-					console.error(err);
-					throw err;
-				}
-				const query = {
-					sql: 'UPDATE items SET name = @name, description = @description, updated = @updated WHERE id = @id',
-					params: {
-						id: item.id,
-						name: item.name,
-						description: item.description,
-						updated: new Date().toISOString()
-					}
-				};
-				try {
-					const [rowCount] = await transaction.runUpdate(query);
-					await transaction.commit();
-				} catch (err) {
-					console.error('ERROR:', err);
-					throw err;
-				}
-				// finally {
-				// 	database.close();
-				// }
-			});
+			const sql = 'UPDATE items SET name = $1, description = $2, updated = $3 WHERE itemid = $4';
+			const params = [item.name, item.description, new Date().toISOString(), item.id];
+			// FIXME: This is a use case for THEN RETURNING
+			return transaction((client) => client.query(sql, params)).then(() => this.find_item(item.id));
 		}
 	};
 }
 
 const database = get_database();
+// database
+// 	.get_items()
+// 	.then((results) => {
+// 		console.log(results.rows);
+// 		process.exit(0);
+// 	})
+// 	.catch((err) => {
+// 		console.error(err);
+// 		process.exit(1);
+// 	})
+// 	.finally(() => database.end());
+
+// database
+// 	.find_item('3449dfa6-7cea-4ade-98d2-32ede9b17a0b')
+// 	.then((results) => {
+// 		console.log(results.rows);
+// 		process.exit(0);
+// 	})
+// 	.catch((err) => {
+// 		console.error(err);
+// 		process.exit(1);
+// 	})
+// 	.finally(() => database.end());
+
 database
-	.get_items()
+	.update_item({
+		id: '3449dfa6-7cea-4ade-98d2-32ede9b17a0b',
+		name: 'NEW Item E',
+		description: 'I’ve been updated',
+		updated: 'asdf'
+	})
 	.then((results) => {
 		console.log(results.rows);
 		process.exit(0);
