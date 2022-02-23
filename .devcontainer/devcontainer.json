@@ -21,6 +21,10 @@
 		"dracula-theme.theme-dracula",
 		"esbenp.prettier-vscode",
 		"svelte.svelte-vscode",
-		"statelyai.stately-vscode"
+		"statelyai.stately-vscode",
+		"mtxr.sqltools",
+		"mtxr.sqltools-driver-pg",
+		"google-cloud-spanner-ecosystem.google-cloud-spanner-driver",
+		"IronGeek.vscode-env"
 	]
 }
