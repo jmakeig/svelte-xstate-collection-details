@@ -68,8 +68,9 @@ function get_database() {
 		);
 	}
 
-	async function query(statement, params = []) {
-		const results = await database.run({ sql: 'SELECT 1, NULL, "STRING" as tmp' });
+	async function query(statement, params = {}) {
+		// const results = await database.run({ sql: 'SELECT 1, NULL, "STRING" as tmp' });
+		const results = await database.run({ sql: statement, params });
 		return {
 			rows: transform(results)
 		};
@@ -98,20 +99,37 @@ function get_database() {
 			return query(sql);
 		},
 		async find_item(id) {
-			const sql = 'SELECT itemid, name, description, updated FROM items WHERE itemid = $1';
-			return database.query(sql, [id]);
+			const sql = 'SELECT itemid, name, description, updated FROM items WHERE itemid = @itemid';
+			return query(sql, { itemid: id });
 		},
 		async update_item(item) {
-			const sql = 'UPDATE items SET name = $1, description = $2, updated = $3 WHERE itemid = $4';
-			const params = [item.name, item.description, new Date().toISOString(), item.id];
-			// FIXME: This is a use case for THEN RETURNING
-			return transaction((client) => client.query(sql, params)).then(() => this.find_item(item.id));
+			const sql =
+				'UPDATE items SET name = @name, description = @description, updated = @updated WHERE itemid = @itemid';
+			const params = { ...item, updated: new Date().toISOString() };
+			return await transaction(async (txn) => await txn.runUpdate({ sql, params })).then(() =>
+				this.find_item(item.itemid)
+			);
+		},
+		async add_item(item) {
+			const sql =
+				'INSERT INTO items (itemid, name, description, updated) VALUES (@itemid, @name, @description, @updated)';
+			const params = { ...item, itemid: uuid(), updated: new Date().toISOString() };
+			return await transaction(async (txn) => await txn.runUpdate({ sql, params })).then(
+				([count]) => {
+					// const [a, b] = [10, 20]; a === 10, b === 20
+					//const [count] = results;
+					// UGLY!
+					if (count === 1) return params;
+					else throw new Error(count);
+				}
+			);
 		}
 	};
 }
 
 const database = get_database();
 
+/*
 database
 	._seed()
 	.then((results) => {
@@ -123,6 +141,7 @@ database
 		process.exit(1);
 	})
 	.finally(() => database.end());
+*/
 
 // database
 // 	.get_items()
@@ -137,9 +156,9 @@ database
 // 	.finally(() => database.end());
 
 // database
-// 	.find_item('3449dfa6-7cea-4ade-98d2-32ede9b17a0b')
+// 	.find_item('d8d36609-2124-4148-ba87-2bbf5db626b2')
 // 	.then((results) => {
-// 		console.log(results.rows);
+// 		console.log('results', results.rows);
 // 		process.exit(0);
 // 	})
 // 	.catch((err) => {
@@ -150,10 +169,10 @@ database
 
 // database
 // 	.update_item({
-// 		id: '3449dfa6-7cea-4ade-98d2-32ede9b17a0b',
-// 		name: 'NEW Item E',
+// 		itemid: '3c13e867-694c-4dd0-96fd-fa65446e2834', // A
+// 		name: 'THIS IS TOTALLY NEW',
 // 		description: 'I’ve been updated',
-// 		updated: 'asdf'
+// 		updated: undefined
 // 	})
 // 	.then((results) => {
 // 		console.log(results.rows);
@@ -164,3 +183,20 @@ database
 // 		process.exit(1);
 // 	})
 // 	.finally(() => database.end());
+
+database
+	.add_item({
+		itemid: undefined,
+		name: 'H',
+		description: 'This is H',
+		updated: undefined
+	})
+	.then((item) => {
+		console.log(item);
+		process.exit(0);
+	})
+	.catch((err) => {
+		console.error(err);
+		process.exit(1);
+	})
+	.finally(() => database.end());
