@@ -94,10 +94,10 @@ function get_database() {
 	}
 
 	return {
-		query,
-		transaction,
+		_query: query,
+		_transaction: transaction,
 		async close() {
-			return database.close();
+			return await database.close();
 		},
 		async _seed() {
 			// Stable keys across invocations
@@ -248,13 +248,13 @@ test('Seeding', async (assert) => {
 	await database._seed();
 
 	assert.plan(1);
-	database.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
+	database._query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
 });
 
 test('Query syntax error', (assert) => {
 	assert.plan(1);
 	database
-		.query('SYNTAX ERROR')
+		._query('SYNTAX ERROR')
 		.then(() => assert.fail('Should throw'))
 		.catch((err) => {
 			assert.true(err instanceof Error);
@@ -264,8 +264,8 @@ test('Query syntax error', (assert) => {
 test('Empty result', (assert) => {
 	assert.plan(1);
 	database
-		.query('SELECT * FROM items WHERE TRUE = FALSE')
-		.then((result) => assert.deepEquals(result, { rows: [] }), 'rows object with empty array')
+		._query('SELECT * FROM items WHERE TRUE = FALSE')
+		.then((result) => assert.deepEquals(result.rows, []), 'rows object with empty array')
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
@@ -306,7 +306,7 @@ test('find_item', async (assert) => {
 		.catch((err) => assert.fail(err));
 
 	database
-		.find_item('12345')
+		.find_item('aa09ea8a-dae1-485e-9fa0-a10e834a36aa')
 		.then((item) => {
 			assert.equals(item, undefined, 'not found is undefined');
 		})
