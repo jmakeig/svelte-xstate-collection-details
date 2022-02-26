@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS items;
+CREATE TABLE items (
+	itemid UUID PRIMARY KEY, 
+	name STRING NOT NULL UNIQUE, 
+	description STRING,
+	updated TIMESTAMPTZ
+);

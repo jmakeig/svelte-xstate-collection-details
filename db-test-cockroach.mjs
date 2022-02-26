@@ -1,6 +1,21 @@
 import 'dotenv/config';
 import pg from 'pg';
 
+export class ConstraintViolation extends Error {
+	constructor(original) {
+		super(original.details);
+		this.name = 'ConstraintViolation';
+		this.original = original;
+	}
+}
+
+function wrap_error(error) {
+	if ('23505' === error?.code) {
+		return new ConstraintViolation(error);
+	}
+	return error;
+}
+
 // Transactions: https://node-postgres.com/features/transactions#a-pooled-client-with-asyncawait
 // https://gist.github.com/zerbfra/70b155fa00b4e0d6fd1d4e090a039ad4
 
@@ -29,9 +44,9 @@ function get_database() {
 				res = await runner(client);
 				await client.query('COMMIT');
 				return res;
-			} catch (err) {
+			} catch (error) {
 				await client.query('ROLLBACK');
-				throw err;
+				throw wrap_error(error);
 			}
 		} finally {
 			client.release();
@@ -39,8 +54,11 @@ function get_database() {
 	}
 
 	async function query(statement, params = []) {
-		return database.query(statement, params);
-		//return transaction((client) => client.query(statement, params));
+		try {
+			return await database.query(statement, params);
+		} catch (error) {
+			throw wrap_error(error);
+		}
 	}
 
 	return {
@@ -206,7 +224,7 @@ test('add_item', async (assert) => {
 		name: 'New',
 		description: 'New'
 	};
-	assert.plan(5);
+	assert.plan(6);
 	database
 		.add_item(item)
 		.then((it) => {
@@ -216,7 +234,16 @@ test('add_item', async (assert) => {
 			assert.equals(it.name, item.name, `name matches`);
 			assert.equals(it.description, item.description, `description matches`);
 		})
-		.catch((err) => assert.fail(err));
+		.catch((err) => assert.fail(err))
+		.then(() => {
+			database
+				.add_item(item)
+				.then(() => assert.fail('Shouldn’t have been able to add again'))
+				.catch((error) => {
+					// console.error(JSON.stringify(error, null, 2));
+					assert.true(error instanceof ConstraintViolation, 'is a ConstraintViolation');
+				});
+		});
 });
 
 test('find_item', async (assert) => {

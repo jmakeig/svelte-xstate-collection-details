@@ -2,6 +2,22 @@ import 'dotenv/config';
 import { Spanner } from '@google-cloud/spanner';
 import { v4 as uuid } from 'uuid';
 
+export class ConstraintViolation extends Error {
+	constructor(original) {
+		super(original.details);
+		this.name = 'ConstraintViolation';
+		this.original = original;
+	}
+}
+
+function wrap_error(error) {
+	// console.error('wrap_error', error.code, error.message);
+	if (6 === error?.code) {
+		return new ConstraintViolation(error);
+	}
+	return error;
+}
+
 function get_database() {
 	function create_connection() {
 		const config = {
@@ -31,12 +47,12 @@ function get_database() {
 	) {
 		return await database.runTransactionAsync(options, async (txn) => {
 			try {
-				const results = await runner(txn);
+				const result = await runner(txn);
 				await txn.commit();
-				return results;
-			} catch (err) {
+				return result;
+			} catch (error) {
 				await txn.rollback();
-				throw err;
+				throw wrap_error(error);
 			} finally {
 				txn.end();
 			}
@@ -87,9 +103,14 @@ function get_database() {
 			spannerClient.spanner.v1.ResultSetMetadata // https://github.com/googleapis/nodejs-spanner/blob/ddf501e0d636a318f54decfab94293b97ba51d4e/protos/google/spanner/v1/result_set.proto#L165
 		]; 
 		*/
-		const results = await database.run({ sql: statement, params });
+		let result;
+		try {
+			result = await database.run({ sql: statement, params });
+		} catch (error) {
+			throw wrap_error(error);
+		}
 		return {
-			rows: transform(results)
+			rows: transform(result)
 		};
 	}
 
@@ -269,13 +290,13 @@ test('Empty result', (assert) => {
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
-test('add_item', async (assert) => {
+test.only('add_item', async (assert) => {
 	await database._seed();
 	const item = {
 		name: 'New',
 		description: 'New'
 	};
-	assert.plan(5);
+	assert.plan(6);
 	database
 		.add_item(item)
 		.then((it) => {
@@ -285,7 +306,16 @@ test('add_item', async (assert) => {
 			assert.equals(it.name, item.name, `name matches`);
 			assert.equals(it.description, item.description, `description matches`);
 		})
-		.catch((err) => assert.fail(err));
+		.catch((err) => assert.fail(err))
+		.then(() => {
+			database
+				.add_item(item)
+				.then(() => assert.fail('Shouldn’t have been able to add again'))
+				.catch((error) => {
+					// console.error(error);
+					assert.true(error instanceof ConstraintViolation, 'is a ConstraintViolation');
+				});
+		});
 });
 
 test('find_item', async (assert) => {
