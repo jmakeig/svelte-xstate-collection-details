@@ -290,7 +290,7 @@ test('Empty result', (assert) => {
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
-test.only('add_item', async (assert) => {
+test('add_item', async (assert) => {
 	await database._seed();
 	const item = {
 		name: 'New',
