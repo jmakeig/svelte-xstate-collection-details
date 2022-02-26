@@ -167,4 +167,4 @@ test('find_item', async (assert) => {
 		.catch((err) => assert.pass('injection throws'));
 });
 
-test.onFinish(() => database.close());
+test.onFinish(async () => await database.close());
