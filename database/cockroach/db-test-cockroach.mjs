@@ -1,6 +1,5 @@
 import { database, ConstraintViolation } from '../../src/lib/db.cockroach.js';
 import { create_connection } from '../../src/lib/db.cockroach.client.js';
-import test from 'tape';
 
 // Creates a separate connection to do raw SQL to verify the API
 const backdoor = create_connection();
@@ -31,6 +30,9 @@ async function seed(conn) {
 		});
 	});
 }
+
+/*****************************************************************************/
+import test from 'tape';
 
 test('Seeding', async (assert) => {
 	await seed(backdoor);
