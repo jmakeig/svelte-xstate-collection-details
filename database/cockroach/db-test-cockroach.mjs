@@ -1,77 +1,48 @@
 import { database, ConstraintViolation } from '../../src/lib/db.cockroach.js';
-
-/* database
-	._seed()
-	.then((results) => {
-		console.log(results);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
-
-/*  
-database
-	.get_items()
-	.then((results) => {
-		console.log(results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
- */
-
-/* 
-database
-	.find_item('3449dfa6-7cea-4ade-98d2-32ede9b17a0b')
-	.then((results) => {
-		console.log(results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
- */
-/* 
-database
-	.update_item({
-		id: '3449dfa6-7cea-4ade-98d2-32ede9b17a0b',
-		name: 'NEW Item E',
-		description: 'I’ve been updated',
-		updated: 'asdf'
-	})
-	.then((results) => {
-		console.log(results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
- */
-
+import { create_connection } from '../../src/lib/db.cockroach.client.js';
 import test from 'tape';
 
+// Creates a separate connection to do raw SQL to verify the API
+const backdoor = create_connection();
+
+async function seed(conn) {
+	// Stable keys across invocations
+	const uuids = [
+		'27e7f459-3127-4c03-b09e-be2a7f849f6e',
+		'55f36112-3451-4505-8bde-1a33d99e1fa8',
+		'63f04d2c-7b9f-40ac-92ab-1b0fa4f76b6d',
+		'9c35962a-9c60-42b7-ad8d-71acffab8159',
+		'f0f6818b-5723-43a4-82ec-89105930e9c4',
+		'f69c9aab-3b13-4e1d-9a54-e12d45b4aa7a',
+		'fd09ea8a-dae1-485e-9fa0-a10e834a36db'
+	];
+	const sql = 'INSERT INTO items (itemid, name, description, updated) VALUES($1, $2, $3, $4)';
+
+	return await conn.transaction(async (client) => {
+		await client.query('DELETE FROM items WHERE TRUE');
+		// https://github.com/datalanche/node-pg-format#-arrays-and-objects
+		Array.from('abcdefg').forEach(async (letter, i) => {
+			await client.query(sql, [
+				uuids[i],
+				letter.toUpperCase(),
+				`This is ${letter.toUpperCase()}`,
+				new Date().toISOString()
+			]);
+		});
+	});
+}
+
 test('Seeding', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 
 	assert.plan(1);
-	database._query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
+	backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
 });
 
 test('Query syntax error', (assert) => {
 	assert.plan(1);
-	database
-		._query('SYNTAX ERROR')
+	backdoor
+		.query('SYNTAX ERROR')
 		.then(() => assert.fail('Should throw'))
 		.catch((err) => {
 			assert.true(err instanceof Error);
@@ -80,14 +51,14 @@ test('Query syntax error', (assert) => {
 
 test('Empty result', (assert) => {
 	assert.plan(1);
-	database
-		._query('SELECT * FROM items WHERE TRUE = FALSE')
+	backdoor
+		.query('SELECT * FROM items WHERE TRUE = FALSE')
 		.then((result) => assert.deepEquals(result.rows, []), 'rows object with empty array')
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
 test('add_item', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 	const item = {
 		name: 'New',
 		description: 'New'
@@ -115,7 +86,7 @@ test('add_item', async (assert) => {
 });
 
 test('find_item', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 
 	assert.plan(6);
 	database
@@ -146,4 +117,7 @@ test('find_item', async (assert) => {
 		.catch((err) => assert.pass('injection throws'));
 });
 
-test.onFinish(async () => await database.close());
+test.onFinish(async () => {
+	await database.close();
+	await backdoor.close();
+});
