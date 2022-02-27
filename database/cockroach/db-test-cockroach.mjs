@@ -35,14 +35,14 @@ async function seed(conn) {
 /*****************************************************************************/
 import test from 'tape';
 
-test('Seeding', async (assert) => {
+test('Cockroach: Seeding', async (assert) => {
 	await seed(backdoor);
 
 	assert.plan(1);
 	backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
 });
 
-test('Query syntax error', (assert) => {
+test('Cockroach: Query syntax error', (assert) => {
 	assert.plan(1);
 	backdoor
 		.query('SYNTAX ERROR')
@@ -52,7 +52,7 @@ test('Query syntax error', (assert) => {
 		});
 });
 
-test('Empty result', (assert) => {
+test('Cockroach: Empty result', (assert) => {
 	assert.plan(1);
 	backdoor
 		.query('SELECT * FROM items WHERE TRUE = FALSE')
@@ -60,7 +60,7 @@ test('Empty result', (assert) => {
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
-test('get_items', async (assert) => {
+test('Cockroach: get_items', async (assert) => {
 	assert.plan(1);
 	database
 		.get_items()
@@ -68,7 +68,7 @@ test('get_items', async (assert) => {
 		.catch((error) => fail('shouldn’t throw'));
 });
 
-test('add_item', async (assert) => {
+test('Cockroach: add_item', async (assert) => {
 	await seed(backdoor);
 	const item = {
 		name: 'New',
@@ -96,7 +96,7 @@ test('add_item', async (assert) => {
 		});
 });
 
-test('find_item', async (assert) => {
+test('Cockroach: find_item', async (assert) => {
 	await seed(backdoor);
 
 	assert.plan(6);
