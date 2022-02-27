@@ -50,15 +50,19 @@ async function cockroach_seed(conn) {
 	});
 }
 
-scaffold_tests(cockroach_api, cockroach_connect(), cockroach_seed, 'Cockroach');
-scaffold_tests(spanner_api, spanner_connect(), spanner_seed, 'Spanner');
+scaffold_tests(cockroach_api, cockroach_connect(), { seed: cockroach_seed }, 'Cockroach');
+scaffold_tests(spanner_api, spanner_connect(), { seed: spanner_seed }, 'Spanner');
 
-function scaffold_tests(api, backdoor, seed, name = '') {
+function scaffold_tests(api, backdoor, { seed }, name = '') {
 	test(`${name + ': '}Seeding`, async (assert) => {
 		await seed(backdoor);
 
 		assert.plan(1);
-		backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7, 'seeding returned correct number of rows'));
+		backdoor
+			.query('SELECT * FROM items')
+			.then((result) =>
+				assert.equal(result.rows.length, 7, 'seeding returned correct number of rows')
+			);
 	});
 
 	test(`${name + ': '}Query syntax error`, (assert) => {
