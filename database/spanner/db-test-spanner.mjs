@@ -1,98 +1,51 @@
 import { database, ConstraintViolation } from '../../src/lib/db.spanner.js';
+import { create_connection } from '../../src/lib/db.spanner.client.js';
 
-/*
-database
-	._seed()
-	.then((results) => {
-		console.log('results', [results]);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
+// Creates a separate connection to do raw SQL to verify the API
+const backdoor = create_connection();
 
-/*
-database
-	.get_items()
-	.then((results) => {
-		console.log('results.rows', results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
+async function seed(conn) {
+	// Stable keys across invocations
+	const uuids = [
+		'27e7f459-3127-4c03-b09e-be2a7f849f6e',
+		'55f36112-3451-4505-8bde-1a33d99e1fa8',
+		'63f04d2c-7b9f-40ac-92ab-1b0fa4f76b6d',
+		'9c35962a-9c60-42b7-ad8d-71acffab8159',
+		'f0f6818b-5723-43a4-82ec-89105930e9c4',
+		'f69c9aab-3b13-4e1d-9a54-e12d45b4aa7a',
+		'fd09ea8a-dae1-485e-9fa0-a10e834a36db'
+	];
+	const sql =
+		'INSERT INTO items (itemid, name, description, updated) VALUES (@itemid, @name, @description, @updated)';
+	const statements = Array.from('abcdefg').map((letter, i) => ({
+		sql,
+		params: {
+			itemid: uuids[i], //uuid(),
+			name: letter.toUpperCase(),
+			description: `This is item ${letter.toUpperCase()}`,
+			updated: new Date().toISOString()
+		}
+	}));
 
-/*
-database
-	.find_item('d8d36609-2124-4148-ba87-2bbf5db626b2')
-	.then((results) => {
-		console.log('results', results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
+	return await conn.transaction(
+		async (txn) => await txn.batchUpdate(['DELETE FROM items WHERE TRUE', ...statements])
+	);
+}
 
-/*
-database
-	.update_item({
-		itemid: '3c13e867-694c-4dd0-96fd-fa65446e2834', // A
-		name: 'THIS IS TOTALLY NEW',
-		description: 'I’ve been updated',
-		updated: undefined
-	})
-	.then((results) => {
-		console.log(results.rows);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
-
-/*
-database
-	.add_item({
-		itemid: undefined,
-		name: 'H',
-		description: 'This is H',
-		updated: undefined
-	})
-	.then((item) => {
-		console.log(item);
-		process.exit(0);
-	})
-	.catch((err) => {
-		console.error(err);
-		process.exit(1);
-	})
-	.finally(() => database.end());
-*/
-
+/*****************************************************************************/
 import test from 'tape';
 
 test('Seeding', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 
 	assert.plan(1);
-	database._query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
+	backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
 });
 
 test('Query syntax error', (assert) => {
 	assert.plan(1);
-	database
-		._query('SYNTAX ERROR')
+	backdoor
+		.query('SYNTAX ERROR')
 		.then(() => assert.fail('Should throw'))
 		.catch((err) => {
 			assert.true(err instanceof Error);
@@ -101,14 +54,14 @@ test('Query syntax error', (assert) => {
 
 test('Empty result', (assert) => {
 	assert.plan(1);
-	database
-		._query('SELECT * FROM items WHERE TRUE = FALSE')
+	backdoor
+		.query('SELECT * FROM items WHERE TRUE = FALSE')
 		.then((result) => assert.deepEquals(result.rows, []), 'rows object with empty array')
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
 test('add_item', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 	const item = {
 		name: 'New',
 		description: 'New'
@@ -136,7 +89,7 @@ test('add_item', async (assert) => {
 });
 
 test('find_item', async (assert) => {
-	await database._seed();
+	await seed(backdoor);
 
 	assert.plan(6);
 	database
@@ -167,4 +120,7 @@ test('find_item', async (assert) => {
 		.catch((err) => assert.pass('injection throws'));
 });
 
-test.onFinish(async () => await database.close());
+test.onFinish(async () => {
+	await database.close();
+	await backdoor.close();
+});
