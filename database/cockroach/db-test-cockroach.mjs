@@ -108,7 +108,7 @@ test('add_item', async (assert) => {
 				.add_item(item)
 				.then(() => assert.fail('Shouldn’t have been able to add again'))
 				.catch((error) => {
-					// console.error(JSON.stringify(error, null, 2));
+					// console.error(error);
 					assert.true(error instanceof ConstraintViolation, 'is a ConstraintViolation');
 				});
 		});
