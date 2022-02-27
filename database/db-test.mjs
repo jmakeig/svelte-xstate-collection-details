@@ -20,12 +20,12 @@ const uuids = [
 async function spanner_seed(conn) {
 	const sql =
 		'INSERT INTO items (itemid, name, description, updated) VALUES (@itemid, @name, @description, @updated)';
-	const statements = Array.from('abcdefg').map((letter, i) => ({
+	const statements = uuids.map((id, i) => ({
 		sql,
 		params: {
-			itemid: uuids[i], //uuid(),
-			name: letter.toUpperCase(),
-			description: `This is item ${letter.toUpperCase()}`,
+			itemid: id,
+			name: `Item ${String.fromCharCode(65 + i)}`,
+			description: `This is item ${String.fromCharCode(65 + i)}`,
 			updated: new Date().toISOString()
 		}
 	}));
@@ -36,15 +36,14 @@ async function spanner_seed(conn) {
 
 async function cockroach_seed(conn) {
 	const sql = 'INSERT INTO items (itemid, name, description, updated) VALUES($1, $2, $3, $4)';
-
 	return await conn.transaction(async (client) => {
 		await client.query('DELETE FROM items WHERE TRUE');
 		// https://github.com/datalanche/node-pg-format#-arrays-and-objects
-		Array.from('abcdefg').forEach(async (letter, i) => {
+		uuids.forEach(async (id, i) => {
 			await client.query(sql, [
-				uuids[i],
-				letter.toUpperCase(),
-				`This is ${letter.toUpperCase()}`,
+				id,
+				`Item ${String.fromCharCode(65 + i)}`,
+				`This is item ${String.fromCharCode(65 + i)}`,
 				new Date().toISOString()
 			]);
 		});
