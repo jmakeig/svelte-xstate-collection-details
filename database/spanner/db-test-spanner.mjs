@@ -60,6 +60,14 @@ test('Empty result', (assert) => {
 		.catch(() => assert.fail('Shouldn’t throw'));
 });
 
+test('get_items', async (assert) => {
+	assert.plan(1);
+	database
+		.get_items()
+		.then((items) => assert.equals(items.length, 7, 'get all items'))
+		.catch((error) => fail('shouldn’t throw'));
+});
+
 test('add_item', async (assert) => {
 	await seed(backdoor);
 	const item = {
