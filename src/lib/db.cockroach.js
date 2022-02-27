@@ -1,5 +1,4 @@
 import { create_connection } from './db.cockroach.client.js';
-export { ConstraintViolation } from './db.cockroach.client.js';
 
 // Transactions: https://node-postgres.com/features/transactions#a-pooled-client-with-asyncawait
 // https://gist.github.com/zerbfra/70b155fa00b4e0d6fd1d4e090a039ad4

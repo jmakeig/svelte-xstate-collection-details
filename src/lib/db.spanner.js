@@ -1,5 +1,4 @@
 import { create_connection } from './db.spanner.client.js';
-export { ConstraintViolation } from './db.spanner.client.js';
 import { v4 as uuid } from 'uuid';
 
 function get_database() {

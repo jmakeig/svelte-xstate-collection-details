@@ -1,13 +1,6 @@
 import 'dotenv/config';
 import { Spanner } from '@google-cloud/spanner';
-
-export class ConstraintViolation extends Error {
-	constructor(original) {
-		super(original.details);
-		this.name = 'ConstraintViolation';
-		this.original = original;
-	}
-}
+import { ConstraintViolation } from './db-utils.js';
 
 function wrap_error(error) {
 	// console.error('wrap_error', error.code, error.message);

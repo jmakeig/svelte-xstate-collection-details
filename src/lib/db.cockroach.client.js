@@ -1,13 +1,6 @@
 import 'dotenv/config';
 import pg from 'pg';
-
-export class ConstraintViolation extends Error {
-	constructor(original) {
-		super(original.details);
-		this.name = 'ConstraintViolation';
-		this.original = original;
-	}
-}
+import { ConstraintViolation } from './db-utils.js';
 
 function wrap_error(error) {
 	if ('23505' === error?.code) {

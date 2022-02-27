@@ -1,5 +1,6 @@
-import { database, ConstraintViolation } from '../../src/lib/db.cockroach.js';
+import { database } from '../../src/lib/db.cockroach.js';
 import { create_connection } from '../../src/lib/db.cockroach.client.js';
+import { ConstraintViolation } from '../../src/lib/db-utils.js';
 
 // Creates a separate connection to do raw SQL to verify the API
 const backdoor = create_connection();
