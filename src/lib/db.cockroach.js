@@ -5,6 +5,7 @@ export { ConstraintViolation } from './db.cockroach.client.js';
 // https://gist.github.com/zerbfra/70b155fa00b4e0d6fd1d4e090a039ad4
 
 function get_database() {
+	// With RETURNING we don’t even need transactions
 	const { database, query, transaction } = create_connection();
 	return {
 		async get_items() {
@@ -13,7 +14,7 @@ function get_database() {
 		},
 		async find_item(id) {
 			const sql = 'SELECT itemid, name, description, updated FROM items WHERE itemid = $1';
-			const result = await database.query(sql, [id]);
+			const result = await query(sql, [id]);
 			return result.rows[0];
 		},
 		async update_item(item) {
