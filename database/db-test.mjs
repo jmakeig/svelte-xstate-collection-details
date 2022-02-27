@@ -53,15 +53,15 @@ async function cockroach_seed(conn) {
 scaffold_tests(cockroach_api, cockroach_connect(), cockroach_seed, 'Cockroach');
 scaffold_tests(spanner_api, spanner_connect(), spanner_seed, 'Spanner');
 
-function scaffold_tests(api, backdoor, seed, name) {
-	test(`${name}: Seeding`, async (assert) => {
+function scaffold_tests(api, backdoor, seed, name = '') {
+	test(`${name + ': '}Seeding`, async (assert) => {
 		await seed(backdoor);
 
 		assert.plan(1);
-		backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7));
+		backdoor.query('SELECT * FROM items').then((result) => assert.equal(result.rows.length, 7, 'seeding returned correct number of rows'));
 	});
 
-	test(`${name}: Query syntax error`, (assert) => {
+	test(`${name + ': '}Query syntax error`, (assert) => {
 		assert.plan(1);
 		backdoor
 			.query('SYNTAX ERROR')
@@ -71,7 +71,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 			});
 	});
 
-	test(`${name}: Empty result`, (assert) => {
+	test(`${name + ': '}Empty result`, (assert) => {
 		assert.plan(1);
 		backdoor
 			.query('SELECT * FROM items WHERE TRUE = FALSE')
@@ -79,7 +79,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 			.catch(() => assert.fail('Shouldn’t throw'));
 	});
 
-	test(`${name}: get_items`, async (assert) => {
+	test(`${name + ': '}get_items`, async (assert) => {
 		assert.plan(1);
 		api
 			.get_items()
@@ -87,7 +87,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 			.catch((error) => fail('shouldn’t throw'));
 	});
 
-	test(`${name}: add_item`, async (assert) => {
+	test(`${name + ': '}add_item`, async (assert) => {
 		await seed(backdoor);
 		const item = {
 			name: 'New',
@@ -97,7 +97,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 		api
 			.add_item(item)
 			.then((it) => {
-				assert.true(item);
+				assert.true(item, 'item is not empty');
 				assert.true(it.itemid, `has identifier ${it.itemid}`);
 				assert.true(it.updated, `has updated: ${it.updated}`);
 				assert.equals(it.name, item.name, `name matches`);
@@ -115,7 +115,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 			});
 	});
 
-	test(`${name}: find_item`, async (assert) => {
+	test(`${name + ': '}find_item`, async (assert) => {
 		await seed(backdoor);
 
 		assert.plan(6);
@@ -135,7 +135,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 		api
 			.find_item('aa09ea8a-dae1-485e-9fa0-a10e834a36aa')
 			.then((item) => {
-				assert.equals(item, undefined, 'not found is undefined');
+				assert.equals(item, undefined, 'not found returns undefined');
 			})
 			.catch((err) => assert.fail(err));
 
@@ -144,7 +144,7 @@ function scaffold_tests(api, backdoor, seed, name) {
 			.then((item) => {
 				assert.fail(err);
 			})
-			.catch((err) => assert.pass('injection throws'));
+			.catch((err) => assert.pass('injection attempt throws'));
 	});
 
 	test.onFinish(async () => {
