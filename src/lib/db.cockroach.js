@@ -9,7 +9,7 @@ function get_database() {
 	return {
 		async get_items() {
 			const sql = 'SELECT itemid, name, description, updated FROM items ORDER BY name ASC'; // TODO: Filter
-			return query(sql);
+			return (await query(sql)).rows;
 		},
 		async find_item(id) {
 			const sql = 'SELECT itemid, name, description, updated FROM items WHERE itemid = $1';
