@@ -151,6 +151,25 @@ function scaffold_tests(api, backdoor, { seed }, name = '') {
 			.catch((err) => assert.pass('injection attempt throws'));
 	});
 
+	test(`${name + ': '}update_item`, async (assert) => {
+		await seed(backdoor);
+
+		assert.plan(3);
+		api
+			.update_item({
+				itemid: uuids[3],
+				name: 'DUH!',
+				description: 'TOTALLY NEW',
+				updated: 'This should be ignored completely'
+			})
+			.then((item) => {
+				assert.equals(item.itemid, uuids[3], 'matching primary key');
+				assert.equals(item.name, 'DUH!', 'updated name');
+				assert.equals(item.description, 'TOTALLY NEW', 'updated description');
+			})
+			.catch((error) => assert.fail(error.message));
+	});
+
 	test.onFinish(async () => {
 		await api.close();
 		await backdoor.close();

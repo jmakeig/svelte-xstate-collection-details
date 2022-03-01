@@ -27,7 +27,7 @@ function get_database() {
 				  itemid = $3
 				RETURNING
 				  itemid, name, description, updated`;
-			const params = [item.name, item.description, item.id];
+			const params = [item.name, item.description, item.itemid];
 			const result = await query(sql, params);
 			return result.rows[0];
 		},

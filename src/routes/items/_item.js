@@ -364,7 +364,7 @@ export function createItemMachine(fetch) {
 			load: (context, { id }) => fetch(base + `/items/${id}.json`).then((r) => r.json()),
 			// persist: ({ item }) => Promise.resolve({ ...item, updated: new Date().toISOString() }),
 			persist: ({ item }) =>
-				fetch(base + `/items/${item.name}.json`, {
+				fetch(base + `/items/${item.itemid}.json`, {
 					method: 'put',
 					body: JSON.stringify(item)
 				}).then((r) => r.json()),

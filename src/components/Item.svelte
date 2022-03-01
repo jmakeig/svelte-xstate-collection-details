@@ -24,6 +24,7 @@
 				const form = event.currentTarget;
 				item.send('update', {
 					item: {
+						itemid: form.itemid.value,
 						name: form.name.value,
 						description: form.description.value,
 						updated: form.updated.value
@@ -31,6 +32,9 @@
 				});
 			}}
 		>
+			<div>
+				<input type="text" id="itemid" name="itemid" value={$item.itemid} readonly />
+			</div>
 			<div>
 				<label for="name">Name</label>
 				<input
