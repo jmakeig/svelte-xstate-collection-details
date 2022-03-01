@@ -4,7 +4,9 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		store.service.subscribe((state)=>{})
+		if ('development' === import.meta.env.MODE) {
+			store.service.subscribe((state) => {});
+		}
 	});
 
 	function skip(k, v) {
@@ -13,13 +15,15 @@
 	}
 </script>
 
-<details open>
-	<summary>{$store.state.toStrings().slice(-1)}</summary>
-	State
-	<pre>{JSON.stringify($store.state.value, null, 2)}</pre>
-	Context
-	<pre>{JSON.stringify($store, skip, 2)}</pre>
-</details>
+{#if 'development' === import.meta.env.MODE}
+	<details open>
+		<summary>{$store.state.toStrings().slice(-1)}</summary>
+		State
+		<pre>{JSON.stringify($store.state.value, null, 2)}</pre>
+		Context
+		<pre>{JSON.stringify($store, skip, 2)}</pre>
+	</details>
+{/if}
 
 <style>
 	details {
