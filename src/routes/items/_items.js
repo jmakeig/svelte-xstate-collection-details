@@ -68,6 +68,11 @@ export function createItemsMachine(fetch) {
 									deselect: {
 										target: 'unselected',
 										actions: ['clearSelection']
+									},
+									updated_item: {
+										// https://spectrum.chat/statecharts/general/actions-without-transitions~43393e12-6989-4bf1-a5ca-eb53752ca8ae
+										internal: true,
+										actions: ['update_item']
 									}
 								}
 							}
@@ -92,17 +97,13 @@ export function createItemsMachine(fetch) {
 		}
 	};
 
-	function fetchItemsDummy(filter) {
-		return Promise.resolve([{ name: 'A' }, { name: 'B' }, { name: 'C' }, { name: 'D' }]);
-	}
-
 	const itemsConfig = {
 		actions: {
 			selectItem: assign({
 				selected: (context, { id }) => {
 					const itemMachine = createItemMachine(fetch);
 					const ref = spawn(itemMachine, `item-${id}`);
-					ref.machine = itemMachine;
+					// ref.machine = itemMachine;
 					return ref;
 				}
 			}),
@@ -120,6 +121,14 @@ export function createItemsMachine(fetch) {
 					context.selected.stop(); // Is this right?
 					return null;
 				}
+			}),
+			update_item: assign({
+				items: (context, { item }) =>
+					context.items.map((existing) => {
+						// console.log(item, existing);
+						if (existing.itemid === item.itemid) return item;
+						else return existing;
+					})
 			})
 		},
 		services: {

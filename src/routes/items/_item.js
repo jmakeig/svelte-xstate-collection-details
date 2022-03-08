@@ -1,19 +1,7 @@
-import { createMachine, assign, actions } from 'xstate';
+import { createMachine, assign, sendParent, actions } from 'xstate';
 const { raise } = actions;
 
 const base = 'https://jmakeig-svelte-xstate-collection-details-q6vvj4h4vxg-3000.githubpreview.dev';
-
-function fetchItemDummy(id) {
-	const item = {
-		name: id,
-		description: `Item ${id}`
-	};
-	return Promise.resolve(item);
-}
-
-function persistDummy(item) {
-	return Promise.resolve(Object.assign({ updated: new Date().toISOString() }, item));
-}
 
 function validate(item) {
 	const validation = [];
@@ -23,56 +11,6 @@ function validate(item) {
 	return Promise.resolve(validation);
 }
 
-/*
-
-{
-	"type": "initialize",
-	"item": {
-		"name": "A"
-	}
-}
-
-{
-	"type": "edit"
-}
-
-// Valid
-
-{
-	"type": "update",
-	"item": {
-		"name": "A",
-		"description": "Another"
-	}
-}
-
-// Invalid
-
-{
-	"type": "update",
-	"item": {
-		"name": "blah",
-		"description": "Another"
-	}
-}
-
-// Valid, again
-
-{
-	"type": "update",
-	"item": {
-		"name": "A",
-		"description": "Yet another"
-	}
-}
-
-// Persisted
-
-{
-  "type":"commit"
-}
-
-*/
 export function createItemMachine(fetch) {
 	const itemDef = {
 		id: 'Item',
@@ -277,7 +215,7 @@ export function createItemMachine(fetch) {
 							onDone: [
 								{
 									target: '#Item.initialized.editing',
-									actions: ['log', 'store']
+									actions: ['log', 'store', 'notify']
 								}
 							],
 							onError: [
@@ -337,6 +275,7 @@ export function createItemMachine(fetch) {
 			store: assign({
 				item: (context, event) => event.item || event.data //|| { dummy: 'dummy-' + new Date().toISOString() }
 			}),
+			notify: sendParent((context, event) => ({ type: 'updated_item', item: event.data })),
 			reset_validation: raise('invalidate'),
 			clear_validation: assign({
 				validation: []
