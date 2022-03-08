@@ -13,7 +13,7 @@
 	 */
 	function* unique(states) {
 		function is_unique(value, all) {
-			return all.filter((state) => state.startsWith(value + '.')).length === 0;
+			return !all.some((state) => state.startsWith(value + '.'));
 		}
 		if (states.length > 1) {
 			if (is_unique(states[0], states.slice(1))) yield states[0];
