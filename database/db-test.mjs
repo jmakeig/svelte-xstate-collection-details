@@ -1,3 +1,4 @@
+import { database as dummy_api } from '../src/lib/db.dummy.js';
 import { database as cockroach_api } from '../src/lib/db.cockroach.js';
 import { create_connection as cockroach_connect } from '../src/lib/db.cockroach.client.js';
 import { database as spanner_api } from '../src/lib/db.spanner.js';
@@ -50,39 +51,53 @@ async function cockroach_seed(conn) {
 	});
 }
 
+scaffold_tests(dummy_api, null, { seed: async () => {} }, 'Dummy');
 scaffold_tests(cockroach_api, cockroach_connect(), { seed: cockroach_seed }, 'Cockroach');
 scaffold_tests(spanner_api, spanner_connect(), { seed: spanner_seed }, 'Spanner');
 
 function scaffold_tests(api, backdoor, { seed }, name = '') {
-	test(`${name + ': '}Seeding`, async (assert) => {
-		await seed(backdoor);
+	if (backdoor) {
+		test(`${name + ': '}Seeding`, async (assert) => {
+			// if (backdoor) {
+			await seed(backdoor);
 
-		assert.plan(1);
-		backdoor
-			.query('SELECT * FROM items')
-			.then((result) =>
-				assert.equal(result.rows.length, 7, 'seeding returned correct number of rows')
-			);
-	});
+			assert.plan(1);
+			backdoor
+				.query('SELECT * FROM items')
+				.then((result) =>
+					assert.equal(result.rows.length, 7, 'seeding returned correct number of rows')
+				);
+			// } else {
+			// 	assert.end();
+			// }
+		});
 
-	test(`${name + ': '}Query syntax error`, (assert) => {
-		assert.plan(1);
-		backdoor
-			.query('SYNTAX ERROR')
-			.then(() => assert.fail('Should throw'))
-			.catch((err) => {
-				assert.true(err instanceof Error);
-			});
-	});
+		test(`${name + ': '}Query syntax error`, (assert) => {
+			// if (backdoor) {
+			assert.plan(1);
+			backdoor
+				.query('SYNTAX ERROR')
+				.then(() => assert.fail('Should throw'))
+				.catch((err) => {
+					assert.true(err instanceof Error);
+				});
+			// } else {
+			// 	assert.end();
+			// }
+		});
 
-	test(`${name + ': '}Empty result`, (assert) => {
-		assert.plan(1);
-		backdoor
-			.query('SELECT * FROM items WHERE TRUE = FALSE')
-			.then((result) => assert.deepEquals(result.rows, []), 'rows object with empty array')
-			.catch(() => assert.fail('Shouldn’t throw'));
-	});
-
+		test(`${name + ': '}Empty result`, (assert) => {
+			// if (backdoor) {
+			assert.plan(1);
+			backdoor
+				.query('SELECT * FROM items WHERE TRUE = FALSE')
+				.then((result) => assert.deepEquals(result.rows, []), 'rows object with empty array')
+				.catch(() => assert.fail('Shouldn’t throw'));
+			// } else {
+			// 	assert.end();
+			// }
+		});
+	}
 	test(`${name + ': '}get_items`, async (assert) => {
 		assert.plan(1);
 		api
@@ -113,7 +128,6 @@ function scaffold_tests(api, backdoor, { seed }, name = '') {
 					.add_item(item)
 					.then(() => assert.fail('Shouldn’t have been able to add again'))
 					.catch((error) => {
-						// console.error(error);
 						assert.true(error instanceof ConstraintViolation, 'is a ConstraintViolation');
 					});
 			});
@@ -172,6 +186,8 @@ function scaffold_tests(api, backdoor, { seed }, name = '') {
 
 	test.onFinish(async () => {
 		await api.close();
-		await backdoor.close();
+		if (backdoor) {
+			await backdoor.close();
+		}
 	});
 }
