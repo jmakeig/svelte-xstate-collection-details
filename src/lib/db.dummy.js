@@ -1,3 +1,5 @@
+// @ts-check
+
 import { v4 as uuid } from 'uuid';
 import { ConstraintViolation } from './db-utils.js';
 
@@ -17,7 +19,7 @@ const items = [
 }));
 
 function delay(ms = 0) {
-	const wait = ms + 100 * (Math.random() - 0.5);
+	const wait = Math.max(0, ms + 100 * (Math.random() - 0.5));
 	return new Promise((resolve) => setTimeout(resolve, wait));
 }
 
