@@ -34,9 +34,9 @@
 	import Items from '$components/Items.svelte';
 </script>
 
-<!-- <svelte:head>
-	<title>Items • {$items.context.items.length}</title>
-</svelte:head> -->
+<svelte:head>
+	<title>Items • {$items.length}</title>
+</svelte:head>
 
 <!-- <pre>{JSON.stringify($items.context, null, 2)}</pre> -->
 <Items {items} />
