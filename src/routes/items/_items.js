@@ -152,13 +152,10 @@ export function createItemsStore(fetch) {
 }
 
 function itemsPropertiesSelector(context, key) {
-	// console.log('itemsPropertiesSelector', context, key);
 	return Object.assign(context[key], {
 		// Getter to wrap the spawned child machine in a serviceStore()
 		get selected() {
-			// console.log('context.selected', context.selected);
 			if (exists(context.selected)) {
-				// console.log(context.selected.constructor.name);
 				return serviceStore(context.selected, 'item');
 			}
 			return context.selected;
