@@ -1,6 +1,12 @@
+// @ts-check
+
 import { create_connection } from './db.spanner.client.js';
 import { v4 as uuid } from 'uuid';
 
+/** @typedef { import("./db").ItemsAPI} ItemsAPI */
+/**
+ * @returns {ItemsAPI}
+ */
 function get_database() {
 	const { database, query, transaction } = create_connection();
 
@@ -42,4 +48,5 @@ function get_database() {
 	};
 }
 
+/** @type {ItemsAPI} */
 export const database = get_database();

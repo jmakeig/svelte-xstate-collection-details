@@ -23,6 +23,28 @@ function delay(ms = 0) {
 
 const SIMULATED_DELAY = 250; // ms
 
+/* @typedef { import("./db").Item} Item */
+/*
+ * @typedef {object} Item
+ * @property {string} itemid
+ * @property {string} name
+ * @property {string} description
+ * @property {Date} updated
+ */
+
+/** @typedef { import("./db").ItemsAPI} ItemsAPI */
+/*
+ * @typedef {object} ItemsAPI
+ * @property {() => Promise<Item[]>} get_items
+ * @property {(itemid: string) => Promise<Item?>} find_item
+ * @property {(item: Item) => Promise<Item>} update_item
+ * @property {(item: Item) => Promise<Item>} add_item
+ * @property {()=> void} close
+ */
+
+/**
+ * @type {ItemsAPI}
+ */
 export const database = {
 	get_items() {
 		return delay(SIMULATED_DELAY).then(() => items);
