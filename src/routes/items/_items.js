@@ -4,6 +4,7 @@ import { createItemMachine } from './_item';
 export function createItemsMachine(fetch) {
 	const itemsDef = {
 		id: 'itemsMachine',
+		preserveActionOrder: true,
 		context: {
 			items: null,
 			selected: null
@@ -65,10 +66,12 @@ export function createItemsMachine(fetch) {
 							unselected: {},
 							selected: {
 								on: {
+									/*
 									deselect: {
 										target: 'unselected',
 										actions: ['clearSelection']
 									},
+									*/
 									updated_item: {
 										// https://spectrum.chat/statecharts/general/actions-without-transitions~43393e12-6989-4bf1-a5ca-eb53752ca8ae
 										internal: true,
@@ -116,12 +119,13 @@ export function createItemsMachine(fetch) {
 					to: ({ selected }) => selected
 				}
 			),
-			clearSelection: assign({
-				selected: (context, event) => {
-					context.selected.stop(); // Is this right?
-					return null;
-				}
-			}),
+			// clearSelection: assign({
+			// 	selected: (context, event) => {
+			// 		console.error('clearSelection', event);
+			// 		context.selected.stop(); // Is this right?
+			// 		return null;
+			// 	}
+			// }),
 			update_item: assign({
 				items: (context, { item }) =>
 					context.items.map((existing) => {

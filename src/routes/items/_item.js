@@ -14,6 +14,7 @@ function validate(item) {
 export function createItemMachine(fetch) {
 	const itemDef = {
 		id: 'Item',
+		preserveActionOrder: true,
 		initial: 'uninitialized',
 		states: {
 			uninitialized: {
@@ -247,6 +248,11 @@ export function createItemMachine(fetch) {
 				}
 			},
 			unloaded: {
+				entry: [
+					(context, event) => {
+						console.log('unloaded', event);
+					}
+				],
 				exit: ['unload'],
 				type: 'final'
 			},
