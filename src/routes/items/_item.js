@@ -1,7 +1,7 @@
 import { createMachine, assign, sendParent, actions } from 'xstate';
 const { raise } = actions;
 
-const base = 'https://jmakeig-svelte-xstate-collection-details-q6vvj4h4vxg-3000.githubpreview.dev';
+// const base = 'https://jmakeig-svelte-xstate-collection-details-q6vvj4h4vxg-3000.githubpreview.dev';
 
 function validate(item) {
 	const validation = [];
@@ -295,15 +295,9 @@ export function createItemMachine(fetch) {
 				state.matches('initialized.editing.validated.valid')
 		},
 		services: {
-			// load: (context, { id }) =>
-			// 	Promise.resolve({
-			// 		name: 'dummy-' + new Date().toISOString(),
-			// 		description: `Random: ${Math.random().toFixed()}`
-			// 	}),
-			load: (context, { id }) => fetch(base + `/items/${id}.json`).then((r) => r.json()),
-			// persist: ({ item }) => Promise.resolve({ ...item, updated: new Date().toISOString() }),
+			load: (context, { id }) => fetch(`/items/${id}.json`).then((r) => r.json()),
 			persist: ({ item }) =>
-				fetch(base + `/items/${item.itemid}.json`, {
+				fetch(`/items/${item.itemid}.json`, {
 					method: 'put',
 					body: JSON.stringify(item)
 				}).then((r) => r.json()),
