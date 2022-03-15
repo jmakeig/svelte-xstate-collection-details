@@ -12,11 +12,15 @@ function toObject(p) {
 	return new Object(p);
 }
 
+/** @typedef {import("svelte/store").Readable} Readable */
+/** @typedef {import('xstate').AnyInterpreter} AnyInterpreter */
+/** @typedef {import('xstate').StateMachine} StateMachine */
 /**
  *
- * @param {Actor} service
- * @param {string} key
- * @returns {readable}
+ * @param {AnyInterpreter &  StateMachine} service
+ * @param {string} [key='data']
+ * @param {(context:object, key:string) => any} selector
+ * @returns {Readable}
  */
 export function serviceStore(service, key = 'data', selector = (context, key) => context[key]) {
 	// console.log('serviceStore', service, key, selector);
@@ -37,12 +41,17 @@ export function serviceStore(service, key = 'data', selector = (context, key) =>
 			// }
 		});
 		service.start();
-		return () => service.stop();
+		return () => {
+			// service.stop();
+		};
 	});
 
 	return {
 		subscribe: store.subscribe,
-		send: log(service.send),
+		// FIXME: I think I need to extract the type into a separate file to
+		//        declare `R extends Reader`
+		// @ts-ignore
+		send: service.send,
 		service
 	};
 }
