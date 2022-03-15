@@ -12,6 +12,7 @@ function validate(item) {
 }
 
 export function createItemMachine(fetch) {
+	/** @type {import('xstate').MachineConfig} */
 	const itemDef = {
 		id: 'Item',
 		preserveActionOrder: true,
@@ -187,7 +188,7 @@ export function createItemMachine(fetch) {
 										// entry: ['log'],
 										on: {
 											update: {
-												type: 'internal'
+												// type: 'internal'
 											},
 											done: {}
 										},
@@ -268,6 +269,7 @@ export function createItemMachine(fetch) {
 		errors: null
 	};
 
+	/** @type {import('xstate').InternalMachineOptions<any, any, any, any, any>} */
 	const itemConfig = {
 		actions: {
 			log: (context, event) => console.log('log', context, event),

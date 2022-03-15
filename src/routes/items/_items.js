@@ -2,6 +2,7 @@ import { createMachine, assign, spawn, send, interpret } from 'xstate';
 import { createItemMachine } from './_item';
 
 export function createItemsMachine(fetch) {
+	/** @type {import('xstate').MachineConfig} */
 	const itemsDef = {
 		id: 'itemsMachine',
 		preserveActionOrder: true,
@@ -100,6 +101,7 @@ export function createItemsMachine(fetch) {
 		}
 	};
 
+	/** @type {import('xstate').InternalMachineOptions<any, any, any, any, any>} */
 	const itemsConfig = {
 		actions: {
 			selectItem: assign({
