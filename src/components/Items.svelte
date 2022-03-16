@@ -3,10 +3,11 @@
 	import Item from '$components/Item.svelte';
 
 	import Debug from './Debug.svelte';
+	let me;
 </script>
 
-<section style="outline: solid 1px red; padding: 0.5em;">
-	<Debug store={items} />
+<section bind:this={me}>
+	<Debug store={items} ref={me} />
 	<h1>Items</h1>
 	{#if $items.state.matches('initialized')}
 		<pre>/items</pre>
@@ -23,7 +24,9 @@
 			{/each}
 		</ul>
 	{/if}
+</section>
+<article>
 	{#if $items.state.matches('initialized.selection.selected')}
 		<Item item={$items.selected} />
 	{/if}
-</section>
+</article>

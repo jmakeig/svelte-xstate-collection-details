@@ -31,7 +31,58 @@
 				history = [{ state: state.toStrings(), timestamp: new Date() }, ...history];
 			});
 		}
+
+		return initialize();
 	});
+
+	/**
+	 * The top-level wrapper
+	 * @type {HTMLDetailsElement}
+	 * */
+	let instance;
+
+	/**
+	 * @type {HTMLElement | null}
+	 */
+	export let ref = null;
+
+	function initialize() {
+		const clazz = 'DEBUG-container';
+		let container = document.querySelector('.' + clazz);
+		if (!container) {
+			container = document.createElement('div');
+			container.classList.add(clazz);
+			document.querySelector('body').appendChild(container);
+
+			const button = document.createElement('button');
+			button.textContent = ' ';
+			button.type = 'button';
+			button.classList.add('toggle');
+			button.title = 'Toggle';
+
+			const toggleDisplay = (event) => {
+				container.classList.toggle('hidden');
+			};
+			button.addEventListener('click', toggleDisplay);
+			container.appendChild(button);
+		}
+		container.appendChild(instance);
+
+		return () => {
+			/* remove listeners */
+		};
+	}
+
+	function showRef(node) {
+		return (event) => {
+			if (node) node.style.outline = 'solid 1px pink';
+		};
+	}
+	function hideRef(node) {
+		return (event) => {
+			if (node) node.style.outline = 'revert';
+		};
+	}
 
 	function skip(k, v) {
 		if ('state' === k) return undefined;
@@ -40,11 +91,18 @@
 </script>
 
 {#if 'development' === import.meta.env.MODE}
-	<details open>
-		<summary>{$store.state.toStrings().slice(-1)}</summary>
-		State
+	<details class="Debug" open bind:this={instance}>
+		<summary
+			on:mouseover={showRef(ref)}
+			on:focus={showRef(ref)}
+			on:mouseout={hideRef(ref)}
+			on:blur={hideRef(ref)}
+		>
+			{$store.state.toStrings().slice(-1)}
+		</summary>
+		<h2>State</h2>
 		<pre>{JSON.stringify($store.state.value, null, 2)}</pre>
-		Context
+		<h2>Context</h2>
 		<pre>{JSON.stringify($store, skip, 2)}</pre>
 
 		<details>
@@ -79,30 +137,66 @@
 {/if}
 
 <style>
-	details {
+	:global(.DEBUG-container) {
+		box-sizing: border-box;
 		position: absolute;
-		top: 1em;
-		right: 1em;
-		width: 40em;
-		background: white;
-		padding: 0.5em;
-		border: solid 0.5px #ddd;
-		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-		font-size: 0.75em;
-	}
-	details > details {
-		position: static;
 		top: 0;
 		right: 0;
-		font-size: inherit;
-		box-shadow: none;
-		width: auto;
+		width: 25%;
+		min-width: 20em;
+		padding: 0;
+		padding-left: 1.5em;
+		outline: solid 0.5px #ccc;
+		background: #efefef;
+		transition: right 0.5s ease-in-out;
+		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+		color: #666;
+		font-size: 0.75em;
 	}
+	:global(.DEBUG-container.hidden) {
+		right: calc(12px - max(25%, 20em)); /* buttton - MAX(width, min-width) */
+		overflow: hidden;
+	}
+	:global(.DEBUG-container button.toggle) {
+		position: absolute;
+		left: 0;
+		width: 12px;
+		height: 100%;
+		top: 0;
+		border: 0;
+		background: #666;
+	}
+	details.Debug[open] {
+		margin-bottom: 1em;
+	}
+	details.Debug > summary {
+		cursor: default;
+		font-weight: bold;
+		background: #999;
+		color: #333;
+		padding: 0.5em;
+		margin: 0 -0.5em 0 -1.5em;
+	}
+
+	details {
+		padding-left: 1em;
+	}
+	details > summary {
+		margin-left: -1em;
+	}
+	details h2 {
+		font-size: inherit;
+		font-weight: bold;
+		margin: 0.25em 0;
+		line-height: 1;
+	}
+
 	pre {
 		max-height: 20em;
 		overflow: auto;
-		padding: 0.5em;
-		background-color: #efefef;
+		margin: 0.5em 0;
+		padding: 0;
 	}
 	.table-container {
 		max-height: 20em;

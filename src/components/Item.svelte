@@ -10,10 +10,12 @@
 	import { coalesce } from '$lib/util';
 
 	import Debug from './Debug.svelte';
+	/** @type {HTMLElement} */
+	let me;
 </script>
 
-<section style="outline: solid 1px red; padding: 0.5em; position: relative;">
-	<Debug store={item} />
+<section bind:this={me}>
+	<Debug store={item} ref={me} />
 	<h2>Item</h2>
 	{#if $item.state.matches('initialized')}
 		<form
