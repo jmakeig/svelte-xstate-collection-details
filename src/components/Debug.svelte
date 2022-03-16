@@ -30,9 +30,8 @@
 			store.service.subscribe((state) => {
 				history = [{ state: state.toStrings(), timestamp: new Date() }, ...history];
 			});
+			return initialize();
 		}
-
-		return initialize();
 	});
 
 	/**
