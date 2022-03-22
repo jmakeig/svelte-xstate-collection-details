@@ -1,16 +1,6 @@
 import { createMachine, assign, sendParent, actions } from 'xstate';
 const { raise } = actions;
 
-// const base = 'https://jmakeig-svelte-xstate-collection-details-q6vvj4h4vxg-3000.githubpreview.dev';
-
-function validate(item) {
-	const validation = [];
-	if ('blah' === item.name) {
-		validation.push({ for: 'name', message: { en: `Name can’t be ‘blah’` } });
-	}
-	return Promise.resolve(validation);
-}
-
 export function createItemMachine(fetch) {
 	/** @type {import('xstate').MachineConfig} */
 	const itemDef = {
@@ -309,7 +299,11 @@ export function createItemMachine(fetch) {
 					method: 'put',
 					body: JSON.stringify(item)
 				}).then((r) => r.json()),
-			validate: ({ item }, event) => validate(item)
+			// validate: ({ item }, event) => validate(item)
+			validate: ({ item }, event) =>
+				fetch(`/items/${item.itemid}.json`, { method: 'post', body: JSON.stringify(item) }).then(
+					(r) => r.json()
+				)
 		},
 		delays: {
 			// https://lawsofux.com/doherty-threshold/

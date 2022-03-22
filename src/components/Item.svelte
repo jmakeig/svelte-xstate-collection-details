@@ -14,10 +14,10 @@
 	let me;
 </script>
 
+<Debug store={item} ref={me} />
 <section bind:this={me}>
-	<Debug store={item} ref={me} />
-	<h2>Item</h2>
 	{#if $item.state.matches('initialized')}
+		<h2>{coalesce($item.name, '(empty)')}</h2>
 		<form
 			aria-label="Edit item"
 			on:submit|preventDefault={(event) => item.send('commit')}
@@ -34,9 +34,7 @@
 				});
 			}}
 		>
-			<div>
-				<input type="text" id="itemid" name="itemid" value={$item.itemid} readonly />
-			</div>
+			<input type="hidden" id="itemid" name="itemid" value={$item.itemid} readonly />
 			<div>
 				<label for="name">Name</label>
 				<input

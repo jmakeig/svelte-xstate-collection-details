@@ -6,27 +6,44 @@
 	let me;
 </script>
 
-<section bind:this={me}>
-	<Debug store={items} ref={me} />
-	<h1>Items</h1>
-	{#if $items.state.matches('initialized')}
-		<pre>/items</pre>
-		<ul>
-			{#each Array.from($items) as item, i}
-				<li>
-					<a
-						href="/items/{item.name}"
-						on:click|preventDefault={(event) => {
-							items.send('select', { id: item.itemid });
-						}}>{item.name}</a
-					>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</section>
-<article>
+<Debug store={items} ref={me} />
+<main>
+	<section bind:this={me}>
+		{#if $items.state.matches('initialized')}
+			<ul>
+				{#each Array.from($items) as item, i}
+					<li>
+						<a
+							href="/items/{item.name}"
+							on:click|preventDefault={(event) => {
+								items.send('select', { id: item.itemid });
+							}}>{item.name}</a
+						>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 	{#if $items.state.matches('initialized.selection.selected')}
-		<Item item={$items.selected} />
+		<article>
+			<Item item={$items.selected} />
+		</article>
 	{/if}
-</article>
+</main>
+
+<style>
+	main {
+		display: grid;
+		grid-template-areas: 'items detail';
+		grid-template-columns: 10em 1fr;
+		grid-column-gap: 1em;
+	}
+	section {
+		grid-area: items;
+		/* background: yellow; */
+	}
+	article {
+		grid-area: detail;
+		/* background: orange; */
+	}
+</style>

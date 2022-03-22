@@ -71,6 +71,19 @@ export const database = {
 		items.push(new_item);
 		return delay(SIMULATED_DELAY).then(() => new_item);
 	},
+	validate_item: function (item) {
+		console.log('validate_item', item);
+		if (items.some((current) => current.name === item.name && current.itemid !== item.itemid))
+			return Promise.resolve([
+				{
+					for: 'name',
+					message: {
+						en: 'Name must be unique'
+					}
+				}
+			]);
+		return Promise.resolve([]);
+	},
 	close() {
 		// no-op
 	}
