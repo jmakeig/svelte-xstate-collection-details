@@ -299,18 +299,37 @@ export function createItemMachine(fetch) {
 					method: 'put',
 					body: JSON.stringify(item)
 				}).then((r) => r.json()),
-			// validate: ({ item }, event) => validate(item)
-			validate: ({ item }, event) =>
-				fetch(`/items/${item.itemid}.json`, { method: 'post', body: JSON.stringify(item) }).then(
-					(r) => r.json()
-				)
+			validate: ({ item }, event) => validate(item)
+			// validate: ({ item }, event) =>
+			// 	fetch(`/items/${item.itemid}.json`, { method: 'post', body: JSON.stringify(item) }).then(
+			// 		(r) => r.json()
+			// 	)
 		},
 		delays: {
 			// https://lawsofux.com/doherty-threshold/
 			// debounce_mutate: 350,
-			debounce_validate: 300
+			debounce_validate: 200
 		}
 	};
+
+	/** @typedef {import('$lib/db').Item} Item */
+	/** @typedef {import('$lib/db').Validation} Validation */
+	/**
+	 *
+	 * @param {Item} item
+	 * @returns {Promise<Validation[]>}
+	 */
+	function validate(item) {
+		/** @type Validation[] */
+		const validations = [];
+		if (item.name.trim().length < 3)
+			validations.push({ for: 'name', message: { en: 'Name must be at least 3 characters' } });
+		if (validations.length > 0) return Promise.resolve(validations);
+
+		return fetch(`/items/${item.itemid}.json`, { method: 'post', body: JSON.stringify(item) }).then(
+			(r) => r.json()
+		);
+	}
 
 	return createMachine(itemDef, itemConfig);
 }

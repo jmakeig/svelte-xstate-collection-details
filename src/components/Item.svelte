@@ -17,7 +17,7 @@
 <Debug store={item} ref={me} />
 <section bind:this={me}>
 	{#if $item.state.matches('initialized')}
-		<h2>{coalesce($item.name, '(empty)')}</h2>
+		<h2>{coalesce($item.name?.trim(), '(empty)')}</h2>
 		<form
 			aria-label="Edit item"
 			on:submit|preventDefault={(event) => item.send('commit')}

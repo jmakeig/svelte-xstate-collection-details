@@ -37,7 +37,7 @@ export async function post({ request }) {
 	console.info('post');
 	return request
 		.json()
-		.then(validate)
+		.then(db.validate_item)
 		.then((/** @type {Validation[]} */ validation) => {
 			return {
 				status: 200,
@@ -70,9 +70,10 @@ function validate_name_unique(item) {
  * @returns {Promise<Validation[]>}
  */
 function validate(item) {
-	return collect(validate_name_value)([], item).then((v) =>
-		collect(validate_name_unique, true)(v, item)
-	);
+	return validate_name_unique(item);
+	// return collect(validate_name_value)([], item).then((v) =>
+	// 	collect(validate_name_unique, true)(v, item)
+	// );
 }
 
 /**
@@ -95,23 +96,22 @@ function validate(item) {
  * @param {boolean} [is_expensive = false] Whether the invocation should be avoided if nothing has already been collected. The order is thus important: run the cheap validations first.
  * @returns {(collector: V[], ...args: any[]) => Promise<V[]>}
  */
-function collect(f, is_expensive = false) {
-	return function (collector = [], ...args) {
-		// console.log("collect.function", vs, ...args);
-		if (is_expensive && collector.length > 0) return Promise.resolve(collector); // Breaks the chain
-		return promisify(f(...args)).then((validations) => [...collector, ...arrayify(validations)]);
-	};
-}
+// function collect(f, is_expensive = false) {
+// 	return function (collector = [], ...args) {
+// 		if (is_expensive && collector.length > 0) return Promise.resolve(collector); // Breaks the chain
+// 		return promisify(f(...args)).then((validations) => [...collector, ...arrayify(validations)]);
+// 	};
+// }
 
 /**
  * @template T
  * @param {T | Promise<T>} value
  * @returns {Promise<T>}
  */
-function promisify(value) {
-	if (value instanceof Promise) return value;
-	return Promise.resolve(value);
-}
+// function promisify(value) {
+// 	if (value instanceof Promise) return value;
+// 	return Promise.resolve(value);
+// }
 
 /**
  * @template T
