@@ -42,6 +42,8 @@ export function serviceStore(service, key = 'data', selector = (context, key) =>
 		});
 		service.start();
 		return () => {
+			// https://github.com/statelyai/xstate/discussions/3134#discussioncomment-2382825
+			console.warn('unsubsribing', service.machine?.id, key);
 			// service.stop();
 		};
 	});
