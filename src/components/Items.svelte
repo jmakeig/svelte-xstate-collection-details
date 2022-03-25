@@ -37,6 +37,21 @@
 		grid-template-areas: 'items detail';
 		grid-template-columns: 10em 1fr;
 		grid-column-gap: 1em;
+
+		height: 100vh;
+		padding: 1em;
+		background-color: var(--color-zinc-200);
+	}
+	main ul {
+		list-style: none;
+		padding: 0 0 0 2em;
+	}
+	main ul > li {
+		margin: 0.5em 0;
+	}
+	main a:link {
+		color: var(--color-zinc-600);
+		text-decoration: none;
 	}
 	section {
 		grid-area: items;

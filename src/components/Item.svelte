@@ -84,28 +84,33 @@
 			{/if}
 		</form>
 	{/if}
+	{#if $item.state.matches('initialized.editing.mutated.dirty.resetting')}
+		<div>
+			<p id="reset-message">{local(metadata($item.state).message)}</p>
+			<button
+				type="button"
+				class="default"
+				on:click={(event) => item.send(event.target.value)}
+				value="no"
+				aria-describedby="reset-message">{local(metadata($item.state).options[0])}</button
+			>
+			<button
+				type="button"
+				value="yes"
+				on:click={(event) => item.send(event.target.value)}
+				aria-describedby="reset-message">{local(metadata($item.state).options[1])}</button
+			>
+		</div>
+	{/if}
 </section>
 
-{#if $item.state.matches('initialized.editing.mutated.dirty.resetting')}
-	<div>
-		<p id="reset-message">{local(metadata($item.state).message)}</p>
-		<button
-			type="button"
-			class="default"
-			on:click={(event) => item.send(event.target.value)}
-			value="no"
-			aria-describedby="reset-message">{local(metadata($item.state).options[0])}</button
-		>
-		<button
-			type="button"
-			value="yes"
-			on:click={(event) => item.send(event.target.value)}
-			aria-describedby="reset-message">{local(metadata($item.state).options[1])}</button
-		>
-	</div>
-{/if}
-
 <style>
+	section {
+		background: white;
+		padding: 1.5em 2em;
+		border-radius: 1em;
+		box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+	}
 	form > div {
 		display: flex;
 		flex-direction: row;
