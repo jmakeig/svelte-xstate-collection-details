@@ -74,7 +74,7 @@
 
 	function showRef(node) {
 		return (event) => {
-			if (node) node.style.outline = 'solid 1px pink';
+			if (node) node.style.outline = 'solid 4px pink';
 		};
 	}
 	function hideRef(node) {
