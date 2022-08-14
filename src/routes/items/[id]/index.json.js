@@ -10,7 +10,7 @@ import { database as db } from '$lib/db';
 /** @typedef {import('$lib/db').Item} Item */
 /** @typedef {import('$lib/db').Validation} Validation */
 
-export async function get({ params, locals }) {
+export async function GET({ params, locals }) {
 	const { id } = params;
 
 	if (!id) throw new ReferenceError(`items/id missing`);
@@ -20,7 +20,7 @@ export async function get({ params, locals }) {
 	};
 }
 
-export async function put({ request }) {
+export async function PUT({ request }) {
 	return request
 		.json()
 		.then(db.update_item)
@@ -33,7 +33,7 @@ export async function put({ request }) {
 		});
 }
 
-export async function post({ request }) {
+export async function POST({ request }) {
 	console.info('post');
 	return request
 		.json()
