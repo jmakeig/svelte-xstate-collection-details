@@ -25,6 +25,18 @@
 		"mtxr.sqltools",
 		"mtxr.sqltools-driver-pg",
 		"google-cloud-spanner-ecosystem.google-cloud-spanner-driver",
-		"IronGeek.vscode-env"
-	]
+		"IronGeek.vscode-env",
+		"dbaeumer.vscode-eslint"
+	],
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"VARIANT": "16-bullseye"
+		}
+	},
+	"features": {
+		"git": "latest",
+		"github-cli": "latest"
+	},
+	"remoteUser": "node"
 }

@@ -1,10 +1,11 @@
+// @migration task: Check imports
 /*
 class ValidationError extends Error {}
 Object.defineProperty(ValidationError.prototype, 'name', {
 	value: 'ValidationError'
 });
 */
-
+import { json } from '@sveltejs/kit';
 import { database as db } from '$lib/db';
 
 /** @typedef {import('$lib/db').Item} Item */
@@ -12,12 +13,8 @@ import { database as db } from '$lib/db';
 
 export async function GET({ params, locals }) {
 	const { id } = params;
-
 	if (!id) throw new ReferenceError(`items/id missing`);
-
-	return {
-		body: await db.find_item(id)
-	};
+	return json(await db.find_item(id));
 }
 
 export async function PUT({ request }) {
@@ -26,10 +23,7 @@ export async function PUT({ request }) {
 		.then(db.update_item)
 		.then((/** @type {Item} */ item) => {
 			// console.log('put', item);
-			return {
-				status: 200,
-				body: item
-			};
+			return json(item);
 		});
 }
 
@@ -39,10 +33,7 @@ export async function POST({ request }) {
 		.json()
 		.then(db.validate_item)
 		.then((/** @type {Validation[]} */ validation) => {
-			return {
-				status: 200,
-				body: validation
-			};
+			return json(validation);
 		});
 }
 
